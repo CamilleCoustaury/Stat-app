@@ -12,6 +12,7 @@ library(tidyr)
 #set the working directory, namely to the folder where we keep the data set.
 # WARNING : must be change according to your own directory
 setwd("/Users/camille/Desktop/COURS ENSAE/Stat-app/data")
+setwd("~/Desktop/Stat-App_git/Data")
 
 #--------------------------------------------------------
 #INDEX CREATION
