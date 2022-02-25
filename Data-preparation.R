@@ -18,7 +18,7 @@ setwd("~/Desktop/Stat-App_git/Data")
 #INDEX CREATION
 
 #********
-##STEP 2 : create an index file, a file that only contains the unique ID's 
+##STEP 1 : create an index file, a file that only contains the unique ID's 
 #of everyone who has ever participated in the survey
 #********
 
@@ -40,16 +40,21 @@ wave5_core = read_dta("wave_5_elsa_data_v4.dta")
 wave6_core = read_dta("wave_6_elsa_data_v2.dta")
 wave7_core = read_dta("wave_7_elsa_data.dta")
 wave8_core = read_dta("wave_8_elsa_data_eul_v2.dta")
-wave9_core = read_dta("wave_9_elsa_data_eul_v2.dta")
+wave9_core = read_dta("wave_9_elsa_data_eul_v1.dta")
 
 index= bind_rows(index,wave2_core["idauniq"], wave3_core["idauniq"], wave4_core["idauniq"],
                  wave5_core["idauniq"], wave6_core["idauniq"], wave7_core["idauniq"],
                  wave8_core["idauniq"], wave9_core["idauniq"]) 
 
+
+BDD_names_core = c("wave_1_core_data_v3.dta", "wave_2_core_data_v4.dta", "wave_3_elsa_data_v4.dta", "wave_4_elsa_data_v3.dta",
+              "wave_5_elsa_data_v4.dta", "wave_6_elsa_data_v2.dta", "wave_7_elsa_data.dta",
+              "wave_8_elsa_data_eul_v2.dta", "wave_9_elsa_data_eul_v2.dta")
+
 #Drop duplicates 
 index = distinct(index)
 
-#This data set now contains the unique ID of each of the 29,807 participants
+#This data set now contains the unique ID of each of the 19,807 participants
 
 
 
@@ -67,7 +72,7 @@ df = merge( x=index, y=wave1_core[c("idauniq","sclddr")], by="idauniq",all.x=TRU
 names(df)[names(df) == 'sclddr'] <- 'sclddr1'
 
 #The data set now contains two variables, the ID variable idauniq and 
-#the subjective SES variable from wave 2 sclddr2.
+#the subjective SES variable from wave 1 sclddr1.
 #We'll add the remaining waves of sclddr accordingly:
 df = merge( x=df, y=wave2_core[c("idauniq","sclddr")], by="idauniq",all.x=TRUE)
 names(df)[names(df) == 'sclddr'] <- 'sclddr2'
@@ -105,7 +110,7 @@ wave4_IFS = read_dta("wave_4_ifs_derived_variables.dta")
 wave5_IFS = read_dta("wave_5_ifs_derived_variables.dta")
 wave6_IFS = read_dta("wave_6_ifs_derived_variables.dta")
 wave7_IFS = read_dta("wave_7_ifs_derived_variables.dta")
-wave8_IFS = read_dta("wave_8_elsa_ifs_dvs_eul_v2.dta")
+wave8_IFS = read_dta("wave_8_elsa_ifs_dvs_eul_v1.dta")
 wave9_IFS = read_dta("wave_9_ifs_derived_variables.dta")
 
 
@@ -140,7 +145,7 @@ wave4_Financial = read_dta("wave_4_financial_derived_variables.dta")
 wave5_Financial = read_dta("wave_5_financial_derived_variables.dta")
 wave6_Financial = read_dta("wave_6_financial_derived_variables.dta")
 wave7_Financial = read_dta("wave_7_financial_derived_variables.dta")
-wave8_Financial = read_dta("wave_8_elsa_financial_dvs_eul_v2.dta")
+wave8_Financial = read_dta("wave_8_elsa_financial_dvs_eul_v1.dta")
 wave9_Financial = read_dta("wave_9_financial_derived_variables.dta")
 
 var_SES_objective <- c("idauniq","totinc_bu_s", "empinc_bu_s", "seinc_bu_s", "spinc_bu_s", 
