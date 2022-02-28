@@ -11,8 +11,7 @@ library(tidyr)
 
 #set the working directory, namely to the folder where we keep the data set.
 # WARNING : must be change according to your own directory
-setwd("/Users/camille/Desktop/COURS ENSAE/Stat-app/data")
-setwd("~/Desktop/Stat-App_git/Data")
+setwd("~/Documents/statApp/git/Stat-app/data")
 
 
 #********
@@ -22,7 +21,7 @@ setwd("~/Desktop/Stat-App_git/Data")
 
 BDD_names_core = c("wave_1_core_data_v3.dta", "wave_2_core_data_v4.dta", "wave_3_elsa_data_v4.dta", "wave_4_elsa_data_v3.dta",
                    "wave_5_elsa_data_v4.dta", "wave_6_elsa_data_v2.dta", "wave_7_elsa_data.dta",
-                   "wave_8_elsa_data_eul_v2.dta", "wave_9_elsa_data_eul_v2.dta")
+                   "wave_8_elsa_data_eul_v2.dta", "wave_9_elsa_data_eul_v1.dta")
 
 # It takes time as data sets are big
 for (i in seq_len(9)){
@@ -138,19 +137,31 @@ write.csv(df, file = "StartData_wide.csv")
 
 #--------------------------------------------------------
 # CHANGE INTO LONG DATA SET
+df <- read.csv(file = "StartData_wide.csv")
+
+columns_names = c("srh_hrs", "totinc_bu_s", "empinc_bu_s", "seinc_bu_s", "spinc_bu_s", "nethw_bu_s", "netfw_bu_s")
+
+df_temp <- select(df, idauniq, starts_with("sclddr"))
+df_long <- pivot_longer(df_temp, !idauniq, names_to = "wage", names_prefix = "sclddr", values_to = "sclddr")
+
+for (i in columns_names){
+  df_temp <- select(df, idauniq, starts_with(i))
+  df_temp_long <- pivot_longer(df_temp, !idauniq, names_to = "wage", names_prefix = i, values_to = i)
+  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wage'))
+}
 
 # Name the variables :
-df1=df[c("idauniq","sclddr1", "sclddr2", "sclddr3","sclddr4","sclddr5","sclddr6","sclddr7","sclddr8","sclddr9")]
-df2=df[c("idauniq","srh_hrs1", "srh_hrs2", "srh_hrs3","srh_hrs4","srh_hrs5","srh_hrs6","srh_hrs7","srh_hrs8","srh_hrs9")]
-
-gathercols1 <- c("sclddr1", "sclddr2", "sclddr3","sclddr4","sclddr5","sclddr6","sclddr7","sclddr8","sclddr9")
-gathercols2 <- c("srh_hrs1", "srh_hrs2", "srh_hrs3","srh_hrs4","srh_hrs5","srh_hrs6","srh_hrs7","srh_hrs8","srh_hrs9")
-
-df_long1=gather(df1, condition1, sclddr, all_of(gathercols1))
-df_long2=gather(df2, condition2, srh_hsr, all_of(gathercols2))
-df_long = merge( x=df_long1, y=df_long2, by="idauniq",all.x=TRUE)
-
-save(df_long, file="StartData_long.dta")
+# df1=df[c("idauniq","sclddr1", "sclddr2", "sclddr3","sclddr4","sclddr5","sclddr6","sclddr7","sclddr8","sclddr9")]
+# df2=df[c("idauniq","srh_hrs1", "srh_hrs2", "srh_hrs3","srh_hrs4","srh_hrs5","srh_hrs6","srh_hrs7","srh_hrs8","srh_hrs9")]
+# 
+# gathercols1 <- c("sclddr1", "sclddr2", "sclddr3","sclddr4","sclddr5","sclddr6","sclddr7","sclddr8","sclddr9")
+# gathercols2 <- c("srh_hrs1", "srh_hrs2", "srh_hrs3","srh_hrs4","srh_hrs5","srh_hrs6","srh_hrs7","srh_hrs8","srh_hrs9")
+# 
+# df_long1=gather(df1, condition1, sclddr, all_of(gathercols1))
+# df_long2=gather(df2, condition2, srh_hsr, all_of(gathercols2))
+# df_long = merge( x=df_long1, y=df_long2, by="idauniq",all.x=TRUE)
+# 
+# save(df_long, file="StartData_long.dta")
 
 
 
