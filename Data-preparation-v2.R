@@ -150,6 +150,8 @@ for (i in columns_names){
   df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wage'))
 }
 
+write.csv(df_long, file = 'StartData_long.csv')
+
 # Name the variables :
 # df1=df[c("idauniq","sclddr1", "sclddr2", "sclddr3","sclddr4","sclddr5","sclddr6","sclddr7","sclddr8","sclddr9")]
 # df2=df[c("idauniq","srh_hrs1", "srh_hrs2", "srh_hrs3","srh_hrs4","srh_hrs5","srh_hrs6","srh_hrs7","srh_hrs8","srh_hrs9")]
