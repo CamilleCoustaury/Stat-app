@@ -1,0 +1,56 @@
+#Stat des
+
+library(ggplot2)
+library(haven)
+
+StartData_wide <- read.csv("StartData_wide.csv")
+
+sum(is.na(StartData_wide$sclddr1)) # 7708 valeurs manquantes
+sum(is.na(StartData_wide$sclddr2)) # 10375 valeurs manquantes
+sum(is.na(StartData_wide$sclddr3)) # 10036 valeurs manquantes
+sum(is.na(StartData_wide$sclddr4)) # 8757 valeurs manquantes
+sum(is.na(StartData_wide$sclddr5)) # 9533 valeurs manquantes
+sum(is.na(StartData_wide$sclddr6)) # 9206 valeurs manquantes
+sum(is.na(StartData_wide$sclddr7)) # 10141 valeurs manquantes
+sum(is.na(StartData_wide$sclddr8)) # 11362 valeurs manquantes
+sum(is.na(StartData_wide$sclddr9)) # 11071 valeurs manquantes (du au renouvellement de la BDD)
+
+#Moyenne de la variable de bien-être perçue (sur 100, sans compter les valeurs manquantes et les chiffres<0)
+mean_withoutnanandnegative<-function(column){
+  compteur=0
+  s=0
+  for (i in column){
+    if (is.na(i)==FALSE){
+      if (i>0){
+        s=s+i
+        compteur=compteur+1}}}
+  return(s/compteur)}
+
+mean_sclddr <- c(mean_withoutnanandnegative(StartData_wide$sclddr1),mean_withoutnanandnegative(StartData_wide$sclddr2),
+                 mean_withoutnanandnegative(StartData_wide$sclddr3),mean_withoutnanandnegative(StartData_wide$sclddr4),
+                 mean_withoutnanandnegative(StartData_wide$sclddr5),mean_withoutnanandnegative(StartData_wide$sclddr6),
+                 mean_withoutnanandnegative(StartData_wide$sclddr7),mean_withoutnanandnegative(StartData_wide$sclddr8),
+                 mean_withoutnanandnegative(StartData_wide$sclddr9))
+mean_sclddr_tot <- mean(mean_sclddr)
+
+#Moyenne de la variable de santé (sur 5, sans compter les valeurs manquantes et les chiffres<0)
+#Attention on enlève wave 3 car pas mesurée
+mean_srh_hrs <- c(mean_withoutnanandnegative(StartData_wide$srh_hrs1),mean_withoutnanandnegative(StartData_wide$srh_hrs2),
+                 mean_withoutnanandnegative(StartData_wide$srh_hrs4),
+                 mean_withoutnanandnegative(StartData_wide$srh_hrs5),mean_withoutnanandnegative(StartData_wide$srh_hrs6),
+                 mean_withoutnanandnegative(StartData_wide$srh_hrs7),mean_withoutnanandnegative(StartData_wide$srh_hrs8),
+                 mean_withoutnanandnegative(StartData_wide$srh_hrs9))
+mean_srh_hrs_tot <- mean(mean_srh_hrs)
+
+
+# Pour réaliser des histogrammes :
+histogramme <- function(bdd, variable) {
+  ggplot(data = bdd, aes_string(variable)) + geom_histogram()
+}
+
+histogramme(StartData_wide, "sclddr1")
+histogramme(StartData_wide, "srh_hrs9")
+
+#commentaire 
+
+
