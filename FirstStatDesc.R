@@ -51,5 +51,6 @@ histogramme <- function(bdd, variable) {
 histogramme(StartData_wide, "sclddr1")
 histogramme(StartData_wide, "srh_hrs9")
 
+#commentaire 
 
 
