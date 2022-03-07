@@ -51,6 +51,52 @@ histogramme <- function(bdd, variable) {
 histogramme(StartData_wide, "sclddr1")
 histogramme(StartData_wide, "srh_hrs9")
 
-#commentaire 
+#travail pour le 9/03
+install.packages(c("readr", "dplyr"))
+library(dplyr)
+library(readr)
+StartData_long = read_csv(file = "/Users/adelemoreau/Desktop/ENSAE/Stat'App/BDD/StartData_long_without_NA.csv")
+
+#histogramme des données
+histogramme(StartData_long, "sclddr") #répartition normale centrée en 60
+histogramme(StartData_long, "srh_hrs") #répartition normale centrée en 2.5
+histogramme(StartData_long, "totinc_bu_s")
+
+#listes de sclddr et srh_hrs
+social_status = StartData_long$sclddr
+health = StartData_long$srh_hrs
+
+#enlever quand valeurs négatives ds une des 2 listes
+social_status_positive <- list()
+
+for (i in social_status){
+  if (i>=0){
+    social_status_positive <- append(social_status_positive,i)
+  }
+}
+
+social_status_positive
+
+#boxplot
+library(ggplot2)
+
+StartData_long$sclddr <- as.factor(StartData_long$sclddr)
+head(StartData_long)
+
+#Box plots basiques
+p <- ggplot(StartData_long, aes(x=sclddr, y=srh_hrs)) + geom_boxplot()
+p
+
+# Tourner le box plot
+p + coord_flip()
+
+# Box plot de type notch
+ggplot(StartData_long, aes(x=sclddr, y=srh_hrs)) + geom_boxplot(notch=TRUE)
+# Changer la couleur, la forme et la taille des 
+# valeurs atypiques (outliers)
+ggplot(StartData_long, aes(x=sclddr, y=srh_hrs)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=1,
+               outlier.size=1)
+
 
 
