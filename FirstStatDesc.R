@@ -99,4 +99,3 @@ ggplot(StartData_long, aes(x=sclddr, y=srh_hrs)) +
                outlier.size=1)
 
 
-
