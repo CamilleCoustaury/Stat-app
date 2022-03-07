@@ -142,15 +142,15 @@ df <- read.csv(file = "StartData_wide.csv")
 columns_names = c("srh_hrs", "totinc_bu_s", "empinc_bu_s", "seinc_bu_s", "spinc_bu_s", "nethw_bu_s", "netfw_bu_s")
 
 df_temp <- select(df, idauniq, starts_with("sclddr"))
-df_long <- pivot_longer(df_temp, !idauniq, names_to = "wage", names_prefix = "sclddr", values_to = "sclddr")
+df_long <- pivot_longer(df_temp, !idauniq, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
 
 for (i in columns_names){
   df_temp <- select(df, idauniq, starts_with(i))
-  df_temp_long <- pivot_longer(df_temp, !idauniq, names_to = "wage", names_prefix = i, values_to = i, values_drop_na = TRUE)
-  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wage'))
+  df_temp_long <- pivot_longer(df_temp, !idauniq, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = FALSE)
+  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave'))
 }
 
-write.csv(df_long, file = 'StartData_long_without_NA.csv')
+write.csv(df_long, file = 'StartData_long_with_NA.csv')
 
 # Name the variables :
 # df1=df[c("idauniq","sclddr1", "sclddr2", "sclddr3","sclddr4","sclddr5","sclddr6","sclddr7","sclddr8","sclddr9")]
