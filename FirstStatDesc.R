@@ -77,7 +77,36 @@ for (i in social_status){
 
 social_status_positive
 
-#boxplot
+
+# -------------------- FONCTIONS UTILES ---------------------------------
+# Diagrammes en barres :
+diagramme_en_barres <- function(BDD, variable, titre) {
+  ggplot(data = BDD, aes_string(variable)) +
+    geom_bar(fill="steelblue") +
+    theme_minimal() +
+    labs(title= titre)
+}
+
+# Preparation BDD
+StartData_long$wave <- as.factor(StartData_long$wave)
+name_column <- c("sclddr", "srh_hrs", "totinc_bu_s", "empinc_bu_s", "seinc_bu_s", "spinc_bu_s", 
+                 "nethw_bu_s", "netfw_bu_s")
+
+# ------------------ MISSING VALUES ----------------------
+# Créer des tables avec les valeurs manquantes : 
+for (i in seq_len(length(name_column))){
+  assign(x = paste0("missing_value_", name_column[i]), value = StartData_long %>% rename(wave = wave, var = name_column[i]) %>% filter(var < 0))
+}
+# Tracer les diagrammes en barres pour toutes les variables :
+for (i in seq_len(length(name_column))){
+  titre = paste0("Missing values of : ", name_column[i])
+  print(diagramme_en_barres(get(paste0("missing_value_", name_column[i])), "wave", titre))
+}
+
+# Pas de valeurs manquantes pour : empinc, spin
+
+
+#--------------------- BOXPLOT -----------------------------------
 library(ggplot2)
 
 StartData_long$sclddr <- as.factor(StartData_long$sclddr)
@@ -95,6 +124,19 @@ ggplot(StartData_long, aes(x=sclddr, y=srh_hrs)) + geom_boxplot(notch=TRUE)
 # Changer la couleur, la forme et la taille des 
 # valeurs atypiques (outliers)
 ggplot(StartData_long, aes(x=sclddr, y=srh_hrs)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=1,
+               outlier.size=1)
+
+
+# salaire (PB AVEC LES SALAIRES NULS !!!)
+StartData_long$srh_hrs <- as.factor(StartData_long$srh_hrs)
+int <- StartData_long %>% filter(srh_hrs>0) 
+ggplot(int, aes(x=as.factor(srh_hrs), y=log(empinc_bu_s))) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=1,
+               outlier.size=1)
+# Statut social
+int <- StartData_long %>% filter(srh_hrs>0 & sclddr >=0) 
+ggplot(int, aes(x=as.factor(srh_hrs), y=sclddr)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=1,
                outlier.size=1)
 
