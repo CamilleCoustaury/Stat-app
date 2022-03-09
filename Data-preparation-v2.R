@@ -12,6 +12,7 @@ library(tidyr)
 #set the working directory, namely to the folder where we keep the data set.
 # WARNING : must be change according to your own directory
 setwd("~/Documents/statApp/git/Stat-app/data")
+#setwd("~/Desktop/Stat-App_git/Data")
 
 
 #********
@@ -83,11 +84,23 @@ for (i in seq_len(9)){
   assign(x = paste0("wave", i, "_IFS"), value = read_dta(BDD_names_IFS[i]))
 }
 
+# --- Pour la vague 3 : 
+# Prendre la variable srh_hse
+wave3_IFS <- wave3_IFS[c("idauniq", "srh_hse", "edqual")]
+wave3_IFS$srh_hrs <- wave3_IFS$srh_hse
+
+# CHANGER LES MODALITES DE LA VAGUE 3
+
 
 # Keep the variable srh_hrs
+var_educ_health <- c("idauniq","srh_hrs", "edqual")
+
 for (i in 1:9){
-  df = merge( x=df, y=get(paste0("wave", i, "_IFS"))[c("idauniq","srh_hrs")], by="idauniq",all.x=TRUE)
-  names(df)[names(df) == 'srh_hrs'] <- paste0('srh_hrs', i)
+  df = merge( x=df, y=get(paste0("wave", i, "_IFS"))[c("idauniq","srh_hrs", "edqual")], by="idauniq",all.x=TRUE)
+  # For each vairable in var_educ_health, rename the variable
+  for (elem in var_educ_health[2:length(var_educ_health)]){
+    names(df)[names(df) == elem] <- paste0(elem, i)
+  }
 }
 
 
@@ -109,8 +122,7 @@ for (i in seq_len(9)){
 
 
 # States the Objective SES variables :
-var_SES_objective <- c("idauniq","totinc_bu_s", "empinc_bu_s", "seinc_bu_s", "spinc_bu_s", 
-                       "nethw_bu_s", "netfw_bu_s")
+var_SES_objective <- c("idauniq","eqtotinc_bu_s", "nettotnhw_bu_s")
 
 # Keep only the variables we want (var_SES_objective)
 for (i in seq_len(9)){
@@ -139,31 +151,19 @@ write.csv(df, file = "StartData_wide.csv")
 # CHANGE INTO LONG DATA SET
 df <- read.csv(file = "StartData_wide.csv")
 
-columns_names = c("srh_hrs", "totinc_bu_s", "empinc_bu_s", "seinc_bu_s", "spinc_bu_s", "nethw_bu_s", "netfw_bu_s")
+columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(2, 3)])
 
 df_temp <- select(df, idauniq, starts_with("sclddr"))
 df_long <- pivot_longer(df_temp, !idauniq, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
 
 for (i in columns_names){
   df_temp <- select(df, idauniq, starts_with(i))
-  df_temp_long <- pivot_longer(df_temp, !idauniq, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = FALSE)
+  df_temp_long <- pivot_longer(df_temp, !idauniq, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = TRUE)
   df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave'))
 }
 
-write.csv(df_long, file = 'StartData_long_with_NA.csv')
+write.csv(df_long, file = 'StartData_long_without_NA.csv')
 
-# Name the variables :
-# df1=df[c("idauniq","sclddr1", "sclddr2", "sclddr3","sclddr4","sclddr5","sclddr6","sclddr7","sclddr8","sclddr9")]
-# df2=df[c("idauniq","srh_hrs1", "srh_hrs2", "srh_hrs3","srh_hrs4","srh_hrs5","srh_hrs6","srh_hrs7","srh_hrs8","srh_hrs9")]
-# 
-# gathercols1 <- c("sclddr1", "sclddr2", "sclddr3","sclddr4","sclddr5","sclddr6","sclddr7","sclddr8","sclddr9")
-# gathercols2 <- c("srh_hrs1", "srh_hrs2", "srh_hrs3","srh_hrs4","srh_hrs5","srh_hrs6","srh_hrs7","srh_hrs8","srh_hrs9")
-# 
-# df_long1=gather(df1, condition1, sclddr, all_of(gathercols1))
-# df_long2=gather(df2, condition2, srh_hsr, all_of(gathercols2))
-# df_long = merge( x=df_long1, y=df_long2, by="idauniq",all.x=TRUE)
-# 
-# save(df_long, file="StartData_long.dta")
 
 
 
