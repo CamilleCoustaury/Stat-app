@@ -44,22 +44,13 @@ for (i in seq_len(length(name_column))){
   print(diagramme_en_barres(get(paste0("missing_value_", name_column[i])), "wave", titre))
 }
 
-
-# -------------- Transformation des variables ----------------------------------
-StartData_long[StartData_long$eqtotinc_bu_s < 0,] <- NA
-StartData_long$log_revenu <- log(StartData_long$eqtotinc_bu_s + 0.000000001)
-StartData_long[StartData_long$nettotnhw_bu_s < 0,] <- NA
-#StartData_long$ihs_wealth <- sinh(StartData_long$nettotnhw_bu_s)
-StartData_long$log_wealth <- log(StartData_long$nettotnhw_bu_s + 0.000000001)
-
-
 # -------------------- HISTOGRAMME -----------------------------
 histogramme(StartData_long, "sclddr") #répartition normale centrée en 60
 histogramme(StartData_long, "srh_hrs") #répartition normale centrée en 2.5
 histogramme(StartData_long, "eqtotinc_bu_s")
 histogramme(StartData_long, "log_revenu")
 histogramme(StartData_long, "nettotnhw_bu_s")
-histogramme(StartData_long, "log_wealth")
+histogramme(StartData_long, "ihs_wealth")
 
 
 #--------------------- BOXPLOT -----------------------------------
@@ -73,12 +64,12 @@ int$srh_hrs <- as.factor(int$srh_hrs)
   # Différence entre les vagues
 boxplot(int, "wave", "sclddr")
 boxplot(int, "wave", "log_revenu")
-boxplot(int, "wave", "log_wealth")
+boxplot(int, "wave", "ihs_wealth")
 
 # Les outliers -20 correspondent aux personnes ayant un revenu nul
 # Quand on retire ces valeurs : 
 boxplot(int %>% filter(log_revenu > -20), "wave", "log_revenu")
-boxplot(int %>% filter(log_revenu > -20), "wave", "log_wealth")
+boxplot(int %>% filter(ihs_wealth >=0 ), "wave", "ihs_wealth")
 
 # Les personnes sont de plus en plus riches au fil des vagues
 

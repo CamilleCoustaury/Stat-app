@@ -164,7 +164,10 @@ for (i in columns_names){
 }
 
 
+#------------------------------------------------------
+# TRANSFORMATION DES VARIABLES
 # Changer les modalités de la variable education
+df_long[df_long$edqual < 0,]$edqual <- NA
 df_long$edqual <- as.factor(df_long$edqual)
 df_long$edqual <- fct_collapse(df_long$edqual, "0 - No qualification" = "7",
                              "1 - Foreign / Others" = "6",
@@ -173,6 +176,9 @@ df_long$edqual <- fct_collapse(df_long$edqual, "0 - No qualification" = "7",
                              "4 - Some tertiary" = "2",
                              "5 - Tertiary" = "1")
 
+# Les variables de revenus
+df_long$log_revenu <- log(df_long$eqtotinc_bu_s + 0.000000001)
+df_long$ihs_wealth <- asinh(df_long$nettotnhw_bu_s)
 
 write.csv(df_long, file = 'StartData_long_without_NA.csv')
 
