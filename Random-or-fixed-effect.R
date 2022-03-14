@@ -8,7 +8,7 @@ library(plm)
 # library(foreign)
 # library(plm)
 
-setwd("~/Documents/statApp/git/Stat-app/data")
+setwd("~/Documents/statApp/git/Stat-app/git")
 df <- read.csv("StartData_wide.csv")
 df_long <- read.csv("StartData_long_with_NA.csv")
 
@@ -23,7 +23,7 @@ keep <- which(df_long$sclddr >= 0 & df_long$srh_hrs >= 0)
 
 df_kept <- df_long[keep,]
 
-ols <-lm(srh_hrs ~ sclddr, data=df_kept)
+ols <-lm(srh_hrs ~ sclddr + , data=df_kept)
 
 grid <- data.frame(Intercept=1, sclddr=seq_range(df_kept$sclddr, 10))
 grid$pred <- predict(ols,grid)
@@ -37,10 +37,12 @@ for (i in 1:20){
   HRS_mean <- c(HRS_mean,mean(df_long[which(df_long$sclddr == 5*i & df_long$srh_hrs >= 0),]$srh_hrs))
 }
 
+mere <- data.frame(sclddr = 1:20 * 5, HRS_mean, ols = coefficients(ols)[1] + coefficients(ols)[2] * (1:20) * 5)
+ggplot(data = mere, aes(sclddr)) + geom_point(aes(y = HRS_mean)) + geom_line(aes(y=ols), colour = 'red')
 
 plot(x = 1:20 * 5, y = HRS_mean, xlab = "sclddr")
 
-fixed <- plm(srh_hrs ~ sclddr, data=df_kept, index=c("wave"), model="within")
-random <- plm(srh_hrs ~ sclddr, data=df_kept, index=c("wave"), model="random")
+fixed <- plm(srh_hrs ~ sclddr, data=df_kept, index=c("idauniq"), model="within")
+random <- plm(srh_hrs ~ sclddr, data=df_kept, index=c("idauniq"), model="random")
 phtest(random, fixed)
 # p-value is consistent then the random effect model is inconsistent and we have to choose the fixed effect model
