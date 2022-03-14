@@ -4,45 +4,34 @@ library(modelr)
 library(ggplot2)
 library(plm)
 
-# library(tidyverse)
-# library(foreign)
-# library(plm)
 
 setwd("~/Documents/statApp/git/Stat-app/git")
 df <- read.csv("StartData_wide.csv")
-df_long <- read.csv("StartData_long_with_NA.csv")
+df_long <- read.csv("StartData_long_without_NA.csv")
 
-# test <- function(x) {
-#   if (is.na(x) | x<0) {
-#     x<- NA
-#   }
-#   x
-# }
-
-keep <- which(df_long$sclddr >= 0 & df_long$srh_hrs >= 0)
-
+# On enlève les individus avec des données manquantes ou avec un salaire négatif
+keep <- which(df_long$sclddr >= 0 & df_long$srh_hrs >= 0 & df_long$edqual >= 0 & df_long$eqtotinc_bu_s >= 0)
 df_kept <- df_long[keep,]
 
-ols <-lm(srh_hrs ~ sclddr + , data=df_kept)
-
-grid <- data.frame(Intercept=1, sclddr=seq_range(df_kept$sclddr, 10))
-grid$pred <- predict(ols,grid)
-ggplot(df_kept, aes(sclddr)) +
-  geom_point(aes(y = srh_hrs)) +
-  geom_line(aes(y = pred), data = grid, colour = "red", size = 1)
-
-HRS_mean = c()
-
-for (i in 1:20){
-  HRS_mean <- c(HRS_mean,mean(df_long[which(df_long$sclddr == 5*i & df_long$srh_hrs >= 0),]$srh_hrs))
+# la fonction Inverse Hyperbolic Sine
+ihs <- function(x) {
+  y <- log(x + sqrt(x ^ 2 + 1))
+  return(y)
 }
 
-mere <- data.frame(sclddr = 1:20 * 5, HRS_mean, ols = coefficients(ols)[1] + coefficients(ols)[2] * (1:20) * 5)
-ggplot(data = mere, aes(sclddr)) + geom_point(aes(y = HRS_mean)) + geom_line(aes(y=ols), colour = 'red')
+# On applique les transformations aux variables de revenu et de richesse
+df_kept$log_inc <- log(df_kept$eqtotinc_bu_s + 1)
+df_kept$ihs_wealth <- ihs(df_kept$nettotnhw_bu_s)
 
-plot(x = 1:20 * 5, y = HRS_mean, xlab = "sclddr")
+# regression de la santé percue sur les autres variables
+ols <-lm(srh_hrs ~ sclddr + log_inc + ihs_wealth + edqual, data=df_kept)
 
-fixed <- plm(srh_hrs ~ sclddr, data=df_kept, index=c("idauniq"), model="within")
-random <- plm(srh_hrs ~ sclddr, data=df_kept, index=c("idauniq"), model="random")
+# on calcule la regression avec le modèle des fixed effects et des random effects
+fixed <- plm(srh_hrs ~ sclddr + log_inc + ihs_wealth + edqual, data=df_kept, index=c("idauniq"), model="within")
+random <- plm(srh_hrs ~ sclddr + log_inc + ihs_wealth + edqual, data=df_kept, index=c("idauniq"), model="random")
+
+# on applique le test de Haussman pour comparer les modèles
 phtest(random, fixed)
-# p-value is consistent then the random effect model is inconsistent and we have to choose the fixed effect model
+
+# p-value is consistent then the random effect model is inconsistent and 
+# we have to choose the fixed effect model
