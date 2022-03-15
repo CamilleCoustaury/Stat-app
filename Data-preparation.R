@@ -8,11 +8,13 @@ library(Hmisc)
 library(dplyr)
 library(sqldf)
 library(tidyr)
+library(tidyverse)
 
 #set the working directory, namely to the folder where we keep the data set.
 # WARNING : must be change according to your own directory
-setwd("~/Documents/statApp/git/Stat-app/data")
+#setwd("~/Documents/statApp/git/Stat-app/data")
 #setwd("~/Desktop/Stat-App_git/Data")
+setwd("/Users/camille/Desktop/COURS ENSAE/Stat-app/data")
 
 
 #********
@@ -89,10 +91,6 @@ for (i in seq_len(9)){
 wave3_IFS <- wave3_IFS[c("idauniq", "srh_hse", "edqual")]
 wave3_IFS$srh_hrs <- wave3_IFS$srh_hse
 
-# CHANGER LES MODALITES DE LA VAGUE 3
-
-
-
 
 # Keep the variable srh_hrs and education
 var_educ_health <- c("idauniq","srh_hrs", "edqual")
@@ -104,6 +102,29 @@ for (i in 1:9){
     names(df)[names(df) == elem] <- paste0(elem, i)
   }
 }
+
+# CHANGER LES MODALITES DANS LES VAGUES 
+#on regroupe 4 et 5 pour la vague 3 
+df[df$srh_hrs3 < 0 & !is.na(df$srh_hrs3),]$srh_hrs3 <- NA
+df$srh_hrs3 <- as.factor(df$srh_hrs3)
+df$srh_hrs3<- fct_collapse(df$srh_hrs3, "1" = "1",
+                           "2" = "2",
+                           "3" = "3",
+                           "4" = c("4", "5"))
+df$srh_hrs3 <- as.numeric(as.character(df$srh_hrs3))
+
+#on regroupe 1 et 2 pour les autres vagues et on décale vers le haut 
+names<-c('srh_hrs1','srh_hrs2','srh_hrs4','srh_hrs5','srh_hrs6','srh_hrs7','srh_hrs8','srh_hrs9')
+for (i in names){
+  df[,i][df[,i]<0 & !is.na(df[,i])]<-NA
+  df[,i] <- as.factor(df[,i])
+  df[,i]<- fct_collapse(df[,i], "1" = c("1","2"),
+                        "2" = "3",
+                        "3" = "4",
+                        "4" = "5")
+  df[,i] <- as.numeric(as.character(df[,i]))
+}
+summary(df$srh_hrs1)
 
 
 #--------------------------------------------------------
