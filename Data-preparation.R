@@ -201,6 +201,10 @@ df_long$edqual <- fct_collapse(df_long$edqual, "0 - No qualification" = "7",
 df_long$log_revenu <- log(df_long$eqtotinc_bu_s + 0.000000001)
 df_long$ihs_wealth <- asinh(df_long$nettotnhw_bu_s)
 
+# Sclddr divisé par 10 :
+df_long[df_long$sclddr < 0,]$sclddr <- NA
+df_long$sclddr <- df_long$sclddr/10
+
 write.csv(df_long, file = 'StartData_long_without_NA.csv')
 
 

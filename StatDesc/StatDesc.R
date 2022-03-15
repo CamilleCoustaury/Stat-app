@@ -49,8 +49,8 @@ histogramme(StartData_long, "sclddr") #répartition normale centrée en 60
 histogramme(StartData_long, "srh_hrs") #répartition normale centrée en 2.5
 histogramme(StartData_long, "eqtotinc_bu_s")
 histogramme(StartData_long, "log_revenu")
-histogramme(StartData_long, "nettotnhw_bu_s")
-histogramme(StartData_long, "ihs_wealth")
+histogramme(StartData_long , "ihs_wealth") + facet_grid(. ~ wave)
+histogramme(StartData_long%>% filter(wave == "1"), "ihs_wealth")
 
 
 #--------------------- BOXPLOT -----------------------------------
