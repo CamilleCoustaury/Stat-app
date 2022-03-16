@@ -124,8 +124,18 @@ for (i in names){
                         "4" = "5")
   df[,i] <- as.numeric(as.character(df[,i]))
 }
-summary(df$srh_hrs1)
 
+
+#--------------------------------------------------------
+#CREAT A SINGLE EDUCATION VARIABLE 
+
+df<-cbind(df,df$edqual1)
+names(df)[29]<-"edqual"
+names<-c('edqual2','edqual3','edqual4','edqual5','edqual6','edqual7','edqual8','edqual9')
+for (i in names){
+  df[,'edqual'][df[,'edqual']<0 | is.na(df[,'edqual'])]<-df[,i][df[,'edqual']<0 | is.na(df[,'edqual'])]
+}
+df <- subset(df, select = -c(edqual1,edqual2,edqual3,edqual4,edqual5,edqual6,edqual7,edqual8,edqual9))
 
 #--------------------------------------------------------
 # ADD FINANCIAL VARIABLES
@@ -173,22 +183,23 @@ write.csv(df, file = "StartData_wide.csv")
 # CHANGE INTO LONG DATA SET
 df <- read.csv(file = "StartData_wide.csv")
 
-columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(2, 3)])
+#columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(2, 3)])
+columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[2])
 
-df_temp <- select(df, idauniq, starts_with("sclddr"))
-df_long <- pivot_longer(df_temp, !idauniq, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
+df_temp <- select(df, c(idauniq,edqual), starts_with("sclddr"))
+df_long <- pivot_longer(df_temp, !idauniq & !edqual, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
 
 for (i in columns_names){
-  df_temp <- select(df, idauniq, starts_with(i))
-  df_temp_long <- pivot_longer(df_temp, !idauniq, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = TRUE)
-  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave'))
+  df_temp <- select(df, c(idauniq,edqual), starts_with(i))
+  df_temp_long <- pivot_longer(df_temp, !idauniq & !edqual, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = TRUE)
+  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave','edqual'))
 }
 
 
 #------------------------------------------------------
 # TRANSFORMATION DES VARIABLES
 # Changer les modalités de la variable education
-df_long[df_long$edqual < 0,]$edqual <- NA
+df_long[df_long$edqual < 0 & !is.na(df_long$edqual),]$edqual <- NA
 df_long$edqual <- as.factor(df_long$edqual)
 df_long$edqual <- fct_collapse(df_long$edqual, "0 - No qualification" = "7",
                              "1 - Foreign / Others" = "6",
