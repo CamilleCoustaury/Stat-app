@@ -5,6 +5,7 @@ library(dplyr)
 library(readr)
 
 # ------------------- PREPARATION BDD --------------------------
+#StartData_long <- read.csv("Data/StartData_long_without_NA.csv")
 StartData_long <- read.csv("StartData_long_without_NA.csv")
 
 StartData_long$wave <- as.factor(StartData_long$wave)
@@ -21,15 +22,18 @@ diagramme_en_barres <- function(BDD, variable, titre) {
 }
 
 # Histogramme :
-histogramme <- function(bdd, variable) {
-  ggplot(data = bdd, aes_string(variable)) + geom_histogram()
+histogramme <- function(bdd, variable, titre) {
+  ggplot(data = bdd, aes_string(variable)) +
+    geom_histogram()+
+    labs(title= titre)
 }
 
 # Boxplot :
-boxplot <- function(BDD, variable_x, variable_y){
+boxplot <- function(BDD, variable_x, variable_y, titre){
   ggplot(BDD, aes_string(x= variable_x, y=variable_y)) + 
     geom_boxplot(outlier.colour="red", outlier.shape=1,
-                 outlier.size=1)
+                 outlier.size=1) +
+    labs(title= titre)
 }
 
 
@@ -45,12 +49,16 @@ for (i in seq_len(length(name_column))){
 }
 
 # -------------------- HISTOGRAMME -----------------------------
-histogramme(StartData_long, "sclddr") #répartition normale centrée en 60
-histogramme(StartData_long, "srh_hrs") #répartition normale centrée en 2.5
-histogramme(StartData_long, "eqtotinc_bu_s")
-histogramme(StartData_long, "log_revenu")
-histogramme(StartData_long , "ihs_wealth") + facet_grid(. ~ wave)
-histogramme(StartData_long%>% filter(wave == "1"), "ihs_wealth")
+pdf("StatDesc/Histograms.pdf")
+histogramme(StartData_long, "sclddr", "Social Status") +
+  facet_wrap(. ~ wave, ncol = 3)
+histogramme(StartData_long, "srh_hrs", "Self Rated Health") +
+  facet_wrap(. ~ wave, ncol = 3)
+histogramme(StartData_long%>% filter(log_revenu > 0.01), "log_revenu", "Log(income)") +
+  facet_wrap(. ~ wave, ncol = 3)
+histogramme(StartData_long , "ihs_wealth", "Ifs(wealth)") +
+  facet_wrap(. ~ wave, ncol = 3)
+dev.off()
 
 
 #--------------------- BOXPLOT -----------------------------------
@@ -62,23 +70,30 @@ int$srh_hrs <- as.factor(int$srh_hrs)
 
 
   # Différence entre les vagues
-boxplot(int, "wave", "sclddr")
-boxplot(int, "wave", "log_revenu")
-boxplot(int, "wave", "ihs_wealth")
+pdf("StatDesc/Boxplots_Wave.pdf")
+boxplot(int, "wave", "sclddr", "Sclddr vs Wave")
+boxplot(int, "wave", "log_revenu", "Log(Income) vs Wave")
 
 # Les outliers -20 correspondent aux personnes ayant un revenu nul
 # Quand on retire ces valeurs : 
-boxplot(int %>% filter(log_revenu > -20), "wave", "log_revenu")
-boxplot(int %>% filter(ihs_wealth >=0 ), "wave", "ihs_wealth")
+boxplot(int %>% filter(log_revenu > 0), "wave", "log_revenu", "Log(Income) (without null income) vs Wave")
 
+boxplot(int, "wave", "ihs_wealth", "Ihs(Wealth) vs Wave")
+boxplot(int %>% filter(ihs_wealth >=0 ), "wave", "ihs_wealth", "Ihs(Wealth) (without negative wealth) vs Wave")
+dev.off()
 # Les personnes sont de plus en plus riches au fil des vagues
 
 
   # Différence entre les Self Rated Health
-boxplot(int, "srh_hrs", "sclddr") + facet_grid(. ~ wave)
-boxplot(int %>% filter(log_revenu > -20), "srh_hrs", "log_revenu")+ facet_grid(. ~ wave)
-boxplot(int %>% filter(log_revenu > -20), "srh_hrs", "log_wealth")+ facet_grid(. ~ wave)
-
+pdf(file = "StatDesc/Boxplots_health.pdf", height=10,width=10)
+boxplot(int, "srh_hrs", "sclddr", "Social status vs Self Rated Health (by wave)") +
+  facet_wrap(. ~ wave, ncol = 3)
+boxplot(int %>% filter(log_revenu > -20), "srh_hrs", "log_revenu", "Log(Income) vs Self Rated Health (by wave)") +
+  facet_wrap(. ~ wave, ncol = 3)
+boxplot(int %>% filter(log_revenu > -20), "srh_hrs", "ihs_wealth", "Ihs(Wealth) vs Self Rated Health (by wave)")+
+  facet_wrap(. ~ wave, ncol = 3)
+#on ferme le graphique
+dev.off()
 
 # Pour l'éducation :
 tab <- table(int$srh_hrs, int$edqual)[,c(5:10)]
