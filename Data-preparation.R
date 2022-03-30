@@ -104,27 +104,39 @@ for (i in 1:9){
 }
 
 # CHANGER LES MODALITES DANS LES VAGUES 
-#on regroupe 4 et 5 pour la vague 3 
-df[df$srh_hrs3 < 0 & !is.na(df$srh_hrs3),]$srh_hrs3 <- NA
-df$srh_hrs3 <- as.factor(df$srh_hrs3)
-df$srh_hrs3<- fct_collapse(df$srh_hrs3, "1" = "1",
-                           "2" = "2",
-                           "3" = "3",
-                           "4" = c("4", "5"))
-df$srh_hrs3 <- as.numeric(as.character(df$srh_hrs3))
+# #on regroupe 4 et 5 pour la vague 3 
+# df[df$srh_hrs3 < 0 & !is.na(df$srh_hrs3),]$srh_hrs3 <- NA
+# df$srh_hrs3 <- as.factor(df$srh_hrs3)
+# df$srh_hrs3<- fct_collapse(df$srh_hrs3, "1" = "1",
+#                            "2" = "2",
+#                            "3" = "3",
+#                            "4" = c("4", "5"))
+# df$srh_hrs3 <- as.numeric(as.character(df$srh_hrs3))
+# 
+# #on regroupe 1 et 2 pour les autres vagues et on décale vers le haut 
+# names<-c('srh_hrs1','srh_hrs2','srh_hrs4','srh_hrs5','srh_hrs6','srh_hrs7','srh_hrs8','srh_hrs9')
+# for (i in names){
+#   df[,i][df[,i]<0 & !is.na(df[,i])]<-NA
+#   df[,i] <- as.factor(df[,i])
+#   df[,i]<- fct_collapse(df[,i], "1" = c("1","2"),
+#                         "2" = "3",
+#                         "3" = "4",
+#                         "4" = "5")
+#   df[,i] <- as.numeric(as.character(df[,i]))
+# }
 
-#on regroupe 1 et 2 pour les autres vagues et on décale vers le haut 
-names<-c('srh_hrs1','srh_hrs2','srh_hrs4','srh_hrs5','srh_hrs6','srh_hrs7','srh_hrs8','srh_hrs9')
+#on renverse les modalités 
+names<-c('srh_hrs1','srh_hrs2','srh_hrs3','srh_hrs4','srh_hrs5','srh_hrs6','srh_hrs7','srh_hrs8','srh_hrs9')
 for (i in names){
   df[,i][df[,i]<0 & !is.na(df[,i])]<-NA
   df[,i] <- as.factor(df[,i])
-  df[,i]<- fct_collapse(df[,i], "1" = c("1","2"),
-                        "2" = "3",
-                        "3" = "4",
-                        "4" = "5")
+  df[,i]<- fct_collapse(df[,i], "1" = "5",
+                        "2" = "4",
+                        "3" = "3",
+                        "4" = "2",
+                        "5" = "1")
   df[,i] <- as.numeric(as.character(df[,i]))
 }
-
 
 #--------------------------------------------------------
 #CREAT A SINGLE EDUCATION VARIABLE 
@@ -209,6 +221,7 @@ df_long$edqual <- fct_collapse(df_long$edqual, "0 - No qualification" = "7",
                              "5 - Tertiary" = "1")
 
 # Les variables de revenus
+df_long[df_long$eqtotinc_bu_s < 0,]$eqtotinc_bu_s <- 0
 df_long$log_revenu <- log(df_long$eqtotinc_bu_s + 0.000000001)
 df_long$ihs_wealth <- asinh(df_long$nettotnhw_bu_s)
 
