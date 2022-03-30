@@ -47,9 +47,9 @@ index = distinct(index)
 
 
 #--------------------------------------------------------
-# ADD SUBJECTIVE SES VARIABLE
-# In a second step, we will now add the subjective SES variable sclddr to the 
-#data set we have created. We start with the first wave:
+# ADD SCLDDR
+
+# We start with the first wave:
 df = merge( x=index, y=wave1_core[c("idauniq","sclddr")], by="idauniq",all.x=TRUE)
 
 #The merge command here adds the variable sclddr uniquely to each 
@@ -58,6 +58,7 @@ df = merge( x=index, y=wave1_core[c("idauniq","sclddr")], by="idauniq",all.x=TRU
 #rename it accordingly:
 names(df)[names(df) == 'sclddr'] <- 'sclddr1'
 
+
 #The data set now contains two variables, the ID variable idauniq and 
 #the subjective SES variable from wave 1 sclddr1.
 #We'll add the remaining waves of sclddr accordingly:
@@ -65,6 +66,7 @@ for (i in 2:9){
   df = merge( x=df, y=get(paste0("wave", i, "_core"))[c("idauniq","sclddr")], by="idauniq",all.x=TRUE)
   names(df)[names(df) == 'sclddr'] <- paste0('sclddr', i)
 }
+
 
 
 #--------------------------------------------------------
@@ -88,15 +90,15 @@ for (i in seq_len(9)){
 
 # --- Pour la vague 3 : 
 # Prendre la variable srh_hse
-wave3_IFS <- wave3_IFS[c("idauniq", "srh_hse", "edqual")]
+wave3_IFS <- wave3_IFS[c("idauniq", "srh_hse", "edqual", "sex", "age", "wpactive")]
 wave3_IFS$srh_hrs <- wave3_IFS$srh_hse
 
 
 # Keep the variable srh_hrs and education
-var_educ_health <- c("idauniq","srh_hrs", "edqual")
+var_educ_health <- c("idauniq","edqual", "sex", "age", "srh_hrs", "wpactive")
 
 for (i in 1:9){
-  df = merge( x=df, y=get(paste0("wave", i, "_IFS"))[c("idauniq","srh_hrs", "edqual")], by="idauniq",all.x=TRUE)
+  df = merge( x=df, y=get(paste0("wave", i, "_IFS"))[c("idauniq","srh_hrs", "edqual", "age", "sex", "wpactive")], by="idauniq",all.x=TRUE)
   # For each vairable in var_educ_health, rename the variable
   for (elem in var_educ_health[2:length(var_educ_health)]){
     names(df)[names(df) == elem] <- paste0(elem, i)
@@ -142,12 +144,21 @@ for (i in names){
 #CREAT A SINGLE EDUCATION VARIABLE 
 
 df<-cbind(df,df$edqual1)
-names(df)[29]<-"edqual"
+names(df)[names(df)=="edqual1"] <-"edqual"
 names<-c('edqual2','edqual3','edqual4','edqual5','edqual6','edqual7','edqual8','edqual9')
 for (i in names){
   df[,'edqual'][df[,'edqual']<0 | is.na(df[,'edqual'])]<-df[,i][df[,'edqual']<0 | is.na(df[,'edqual'])]
 }
-df <- subset(df, select = -c(edqual1,edqual2,edqual3,edqual4,edqual5,edqual6,edqual7,edqual8,edqual9))
+df <- subset(df, select = -c(edqual2,edqual3,edqual4,edqual5,edqual6,edqual7,edqual8,edqual9))
+
+# We do the same for sex :
+df<-cbind(df,df$sex1)
+names(df)[names(df)=="sex1"] <-"sex"
+names<-c('sex2','sex3','sex4','sex5','sex6','sex7','sex8','sex9')
+for (i in names){
+  df[,'sex'][df[,'sex']<0 | is.na(df[,'sex'])]<-df[,i][df[,'sex']<0 | is.na(df[,'sex'])]
+}
+df <- subset(df, select = -c(sex2,sex3,sex4,sex5,sex6,sex7,sex8,sex9))
 
 #--------------------------------------------------------
 # ADD FINANCIAL VARIABLES
@@ -196,15 +207,15 @@ write.csv(df, file = "StartData_wide.csv")
 df <- read.csv(file = "StartData_wide.csv")
 
 #columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(2, 3)])
-columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[2])
+columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(4, 5, 6)])
 
-df_temp <- select(df, c(idauniq,edqual), starts_with("sclddr"))
-df_long <- pivot_longer(df_temp, !idauniq & !edqual, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
+df_temp <- select(df, c(idauniq, edqual, sex), starts_with("sclddr"))
+df_long <- pivot_longer(df_temp, !idauniq & !edqual & !sex, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
 
 for (i in columns_names){
-  df_temp <- select(df, c(idauniq,edqual), starts_with(i))
-  df_temp_long <- pivot_longer(df_temp, !idauniq & !edqual, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = TRUE)
-  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave','edqual'))
+  df_temp <- select(df, c(idauniq, edqual, sex), starts_with(i))
+  df_temp_long <- pivot_longer(df_temp, !idauniq & !edqual & !sex, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = TRUE)
+  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave', 'edqual', 'sex'))
 }
 
 
