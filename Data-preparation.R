@@ -29,6 +29,7 @@ BDD_names_core = c("wave_1_core_data_v3.dta", "wave_2_core_data_v4.dta", "wave_3
 # It takes time as data sets are big
 for (i in seq_len(9)){
   assign(x = paste0("wave", i, "_core"), value = read_dta(BDD_names_core[i]))
+  print(i)
 }
 
 for (i in seq_len(9)){
@@ -48,6 +49,35 @@ index = distinct(index)
 
 #--------------------------------------------------------
 # ADD SUBJECTIVE SES VARIABLE
+
+
+
+# # ajout de la variable maritale (1 si en couple, 0 sinon)
+# 
+
+for (i in 1:9){
+  col <- data.frame(as.integer(get(paste0("wave", i, "_core"))$couple %in% c(1,2)))
+  names(col) <- "marital_status"
+  assign(x = paste0("wave", i, "_core"), value = cbind(get(paste0("wave", i, "_core")), col))
+}
+
+# wave2_core$dimar <- wave2_core$DiMar
+# # mar <- c('dimar', 'DiMar', 'dimar', 'dimar', 'dimar', 'DiMar', 'DiMar', 'dimarr', 'dimarr')
+# 
+# for (i in 1:5){
+#   col <- as.integer(get(paste0("wave", i, "_core"))$dimar %in% c(2,3))
+#   names(col) <- "marital"
+#   assign(x = paste0("wave", i, "_core"), value = cbind(get(paste0("wave", i, "_core")), col))
+# }
+# 
+# for (i in 6:7){
+#   col <- as.integer(get(paste0("wave", i, "_core"))$DiMar %in% c(2,3,4,11))
+#   names(col) <- "marital"
+#   cbind(get(paste0("wave", i, "_core")), col) 
+# }
+# 
+
+
 # In a second step, we will now add the subjective SES variable sclddr to the 
 #data set we have created. We start with the first wave:
 df = merge( x=index, y=wave1_core[c("idauniq","sclddr")], by="idauniq",all.x=TRUE)
