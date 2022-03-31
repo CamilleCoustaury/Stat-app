@@ -51,7 +51,6 @@ index = distinct(index)
 # ADD SCLDDR
 
 # # ajout de la variable maritale (1 si en couple, 0 sinon)
-wave1_core$couple <- as.integer(wave1_core[,c("dimar")] %in% c(2,3))
 
 col <- data.frame(as.integer(wave1_core$dimar %in% c(3,2)))
 wave1_core$marital_status <- col
