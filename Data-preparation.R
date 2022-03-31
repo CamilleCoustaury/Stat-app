@@ -1,3 +1,4 @@
+
 #### This file is used to create a file for analyses ####
 #--------------------------------------------------------
 #IMPORTATIONS + FILE DIRECTORY
@@ -29,7 +30,6 @@ BDD_names_core = c("wave_1_core_data_v3.dta", "wave_2_core_data_v4.dta", "wave_3
 # It takes time as data sets are big
 for (i in seq_len(9)){
   assign(x = paste0("wave", i, "_core"), value = read_dta(BDD_names_core[i]))
-  print(i)
 }
 
 for (i in seq_len(9)){
@@ -48,9 +48,7 @@ index = distinct(index)
 
 
 #--------------------------------------------------------
-# ADD SUBJECTIVE SES VARIABLE
-
-
+# ADD SCLDDR
 
 # # ajout de la variable maritale (1 si en couple, 0 sinon)
 # 
@@ -61,40 +59,26 @@ for (i in 1:9){
   assign(x = paste0("wave", i, "_core"), value = cbind(get(paste0("wave", i, "_core")), col))
 }
 
-# wave2_core$dimar <- wave2_core$DiMar
-# # mar <- c('dimar', 'DiMar', 'dimar', 'dimar', 'dimar', 'DiMar', 'DiMar', 'dimarr', 'dimarr')
-# 
-# for (i in 1:5){
-#   col <- as.integer(get(paste0("wave", i, "_core"))$dimar %in% c(2,3))
-#   names(col) <- "marital"
-#   assign(x = paste0("wave", i, "_core"), value = cbind(get(paste0("wave", i, "_core")), col))
-# }
-# 
-# for (i in 6:7){
-#   col <- as.integer(get(paste0("wave", i, "_core"))$DiMar %in% c(2,3,4,11))
-#   names(col) <- "marital"
-#   cbind(get(paste0("wave", i, "_core")), col) 
-# }
-# 
-
-
-# In a second step, we will now add the subjective SES variable sclddr to the 
-#data set we have created. We start with the first wave:
-df = merge( x=index, y=wave1_core[c("idauniq","sclddr")], by="idauniq",all.x=TRUE)
+# We start with the first wave:
+df = merge( x=index, y=wave1_core[c("idauniq","sclddr", "marital_status")], by="idauniq",all.x=TRUE)
 
 #The merge command here adds the variable sclddr uniquely to each 
 #participant in the data set, drawing on the wave 2 core file. We should keep
 #in mind that the sclddr variable only comes from wave 2, and so we will
 #rename it accordingly:
 names(df)[names(df) == 'sclddr'] <- 'sclddr1'
+names(df)[names(df) == 'marital_status'] <- 'marital_status'
+
 
 #The data set now contains two variables, the ID variable idauniq and 
 #the subjective SES variable from wave 1 sclddr1.
 #We'll add the remaining waves of sclddr accordingly:
 for (i in 2:9){
-  df = merge( x=df, y=get(paste0("wave", i, "_core"))[c("idauniq","sclddr")], by="idauniq",all.x=TRUE)
+  df = merge( x=df, y=get(paste0("wave", i, "_core"))[c("idauniq","sclddr", "marital_status")], by="idauniq",all.x=TRUE)
   names(df)[names(df) == 'sclddr'] <- paste0('sclddr', i)
+  names(df)[names(df) == 'marital_status'] <- paste0('marital_status', i)
 }
+
 
 
 #--------------------------------------------------------
@@ -118,15 +102,15 @@ for (i in seq_len(9)){
 
 # --- Pour la vague 3 : 
 # Prendre la variable srh_hse
-wave3_IFS <- wave3_IFS[c("idauniq", "srh_hse", "edqual")]
+wave3_IFS <- wave3_IFS[c("idauniq", "srh_hse", "edqual", "sex", "age", "wpactive")]
 wave3_IFS$srh_hrs <- wave3_IFS$srh_hse
 
 
 # Keep the variable srh_hrs and education
-var_educ_health <- c("idauniq","srh_hrs", "edqual")
+var_educ_health <- c("idauniq","edqual", "sex", "age", "srh_hrs", "wpactive")
 
 for (i in 1:9){
-  df = merge( x=df, y=get(paste0("wave", i, "_IFS"))[c("idauniq","srh_hrs", "edqual")], by="idauniq",all.x=TRUE)
+  df = merge( x=df, y=get(paste0("wave", i, "_IFS"))[c("idauniq","srh_hrs", "edqual", "age", "sex", "wpactive")], by="idauniq",all.x=TRUE)
   # For each vairable in var_educ_health, rename the variable
   for (elem in var_educ_health[2:length(var_educ_health)]){
     names(df)[names(df) == elem] <- paste0(elem, i)
@@ -134,38 +118,59 @@ for (i in 1:9){
 }
 
 # CHANGER LES MODALITES DANS LES VAGUES 
-#on regroupe 4 et 5 pour la vague 3 
-df[df$srh_hrs3 < 0 & !is.na(df$srh_hrs3),]$srh_hrs3 <- NA
-df$srh_hrs3 <- as.factor(df$srh_hrs3)
-df$srh_hrs3<- fct_collapse(df$srh_hrs3, "1" = "1",
-                           "2" = "2",
-                           "3" = "3",
-                           "4" = c("4", "5"))
-df$srh_hrs3 <- as.numeric(as.character(df$srh_hrs3))
+# #on regroupe 4 et 5 pour la vague 3 
+# df[df$srh_hrs3 < 0 & !is.na(df$srh_hrs3),]$srh_hrs3 <- NA
+# df$srh_hrs3 <- as.factor(df$srh_hrs3)
+# df$srh_hrs3<- fct_collapse(df$srh_hrs3, "1" = "1",
+#                            "2" = "2",
+#                            "3" = "3",
+#                            "4" = c("4", "5"))
+# df$srh_hrs3 <- as.numeric(as.character(df$srh_hrs3))
+# 
+# #on regroupe 1 et 2 pour les autres vagues et on décale vers le haut 
+# names<-c('srh_hrs1','srh_hrs2','srh_hrs4','srh_hrs5','srh_hrs6','srh_hrs7','srh_hrs8','srh_hrs9')
+# for (i in names){
+#   df[,i][df[,i]<0 & !is.na(df[,i])]<-NA
+#   df[,i] <- as.factor(df[,i])
+#   df[,i]<- fct_collapse(df[,i], "1" = c("1","2"),
+#                         "2" = "3",
+#                         "3" = "4",
+#                         "4" = "5")
+#   df[,i] <- as.numeric(as.character(df[,i]))
+# }
 
-#on regroupe 1 et 2 pour les autres vagues et on décale vers le haut 
-names<-c('srh_hrs1','srh_hrs2','srh_hrs4','srh_hrs5','srh_hrs6','srh_hrs7','srh_hrs8','srh_hrs9')
+#on renverse les modalités 
+names<-c('srh_hrs1','srh_hrs2','srh_hrs3','srh_hrs4','srh_hrs5','srh_hrs6','srh_hrs7','srh_hrs8','srh_hrs9')
 for (i in names){
   df[,i][df[,i]<0 & !is.na(df[,i])]<-NA
   df[,i] <- as.factor(df[,i])
-  df[,i]<- fct_collapse(df[,i], "1" = c("1","2"),
-                        "2" = "3",
-                        "3" = "4",
-                        "4" = "5")
+  df[,i]<- fct_collapse(df[,i], "1" = "5",
+                        "2" = "4",
+                        "3" = "3",
+                        "4" = "2",
+                        "5" = "1")
   df[,i] <- as.numeric(as.character(df[,i]))
 }
-
 
 #--------------------------------------------------------
 #CREAT A SINGLE EDUCATION VARIABLE 
 
 df<-cbind(df,df$edqual1)
-names(df)[29]<-"edqual"
+names(df)[names(df)=="edqual1"] <-"edqual"
 names<-c('edqual2','edqual3','edqual4','edqual5','edqual6','edqual7','edqual8','edqual9')
 for (i in names){
   df[,'edqual'][df[,'edqual']<0 | is.na(df[,'edqual'])]<-df[,i][df[,'edqual']<0 | is.na(df[,'edqual'])]
 }
-df <- subset(df, select = -c(edqual1,edqual2,edqual3,edqual4,edqual5,edqual6,edqual7,edqual8,edqual9))
+df <- subset(df, select = -c(edqual2,edqual3,edqual4,edqual5,edqual6,edqual7,edqual8,edqual9))
+
+# We do the same for sex :
+df<-cbind(df,df$sex1)
+names(df)[names(df)=="sex1"] <-"sex"
+names<-c('sex2','sex3','sex4','sex5','sex6','sex7','sex8','sex9')
+for (i in names){
+  df[,'sex'][df[,'sex']<0 | is.na(df[,'sex'])]<-df[,i][df[,'sex']<0 | is.na(df[,'sex'])]
+}
+df <- subset(df, select = -c(sex2,sex3,sex4,sex5,sex6,sex7,sex8,sex9))
 
 #--------------------------------------------------------
 # ADD FINANCIAL VARIABLES
@@ -214,15 +219,15 @@ write.csv(df, file = "StartData_wide.csv")
 df <- read.csv(file = "StartData_wide.csv")
 
 #columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(2, 3)])
-columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[2])
+columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(4, 5, 6)])
 
-df_temp <- select(df, c(idauniq,edqual), starts_with("sclddr"))
-df_long <- pivot_longer(df_temp, !idauniq & !edqual, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
+df_temp <- select(df, c(idauniq, edqual, sex), starts_with("sclddr"))
+df_long <- pivot_longer(df_temp, !idauniq & !edqual & !sex, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
 
 for (i in columns_names){
-  df_temp <- select(df, c(idauniq,edqual), starts_with(i))
-  df_temp_long <- pivot_longer(df_temp, !idauniq & !edqual, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = TRUE)
-  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave','edqual'))
+  df_temp <- select(df, c(idauniq, edqual, sex), starts_with(i))
+  df_temp_long <- pivot_longer(df_temp, !idauniq & !edqual & !sex, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = TRUE)
+  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave', 'edqual', 'sex'))
 }
 
 
@@ -232,13 +237,14 @@ for (i in columns_names){
 df_long[df_long$edqual < 0 & !is.na(df_long$edqual),]$edqual <- NA
 df_long$edqual <- as.factor(df_long$edqual)
 df_long$edqual <- fct_collapse(df_long$edqual, "0 - No qualification" = "7",
-                             "1 - Foreign / Others" = "6",
-                             "2 - Lower secondary" = c("4", "5"),
-                             "3 - Upper secondary" = "3",
-                             "4 - Some tertiary" = "2",
-                             "5 - Tertiary" = "1")
+                               "1 - Foreign / Others" = "6",
+                               "2 - Lower secondary" = c("4", "5"),
+                               "3 - Upper secondary" = "3",
+                               "4 - Some tertiary" = "2",
+                               "5 - Tertiary" = "1")
 
 # Les variables de revenus
+df_long[df_long$eqtotinc_bu_s < 0,]$eqtotinc_bu_s <- 0
 df_long$log_revenu <- log(df_long$eqtotinc_bu_s + 0.000000001)
 df_long$ihs_wealth <- asinh(df_long$nettotnhw_bu_s)
 
@@ -274,7 +280,6 @@ write.csv(df_long, file = 'StartData_long_without_NA.csv')
 # that analyze self-rated health using ELSA data from 20-25 years ago to get a
 # better understanding of what happened, but as a bottom line we probably just
 # need to accept that we are missing a bit of information at the beginning of the data.
-
-
-
-
+  
+  
+  
