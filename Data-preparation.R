@@ -13,7 +13,7 @@ library(tidyverse)
 
 #set the working directory, namely to the folder where we keep the data set.
 # WARNING : must be change according to your own directory
-#setwd("~/Documents/statApp/git/Stat-app/data")
+setwd("~/Documents/statApp/git/Stat-app/data")
 #setwd("~/Desktop/Stat-App_git/Data")
 setwd("/Users/camille/Desktop/COURS ENSAE/Stat-app/data")
 
@@ -53,7 +53,10 @@ index = distinct(index)
 # # ajout de la variable maritale (1 si en couple, 0 sinon)
 # 
 
-for (i in 1:9){
+col <- data.frame(as.integer(wave1_core$dimar %in% c(3,2)))
+wave1_core$marital_status <- col
+
+for (i in 2:9){
   col <- data.frame(as.integer(get(paste0("wave", i, "_core"))$couple %in% c(1,2)))
   names(col) <- "marital_status"
   assign(x = paste0("wave", i, "_core"), value = cbind(get(paste0("wave", i, "_core")), col))
