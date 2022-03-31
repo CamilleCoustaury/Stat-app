@@ -51,7 +51,7 @@ index = distinct(index)
 # ADD SCLDDR
 
 # # ajout de la variable maritale (1 si en couple, 0 sinon)
-# 
+wave1_core$couple <- as.integer(wave1_core[,c("dimar")] %in% c(2,3))
 
 col <- data.frame(as.integer(wave1_core$dimar %in% c(3,2)))
 wave1_core$marital_status <- col
@@ -62,6 +62,7 @@ for (i in 2:9){
   assign(x = paste0("wave", i, "_core"), value = cbind(get(paste0("wave", i, "_core")), col))
 }
 
+
 # We start with the first wave:
 df = merge( x=index, y=wave1_core[c("idauniq","sclddr", "marital_status")], by="idauniq",all.x=TRUE)
 
@@ -70,7 +71,7 @@ df = merge( x=index, y=wave1_core[c("idauniq","sclddr", "marital_status")], by="
 #in mind that the sclddr variable only comes from wave 2, and so we will
 #rename it accordingly:
 names(df)[names(df) == 'sclddr'] <- 'sclddr1'
-names(df)[names(df) == 'marital_status'] <- 'marital_status'
+names(df)[names(df) == 'marital_status'] <- 'marital_status1'
 
 
 #The data set now contains two variables, the ID variable idauniq and 
@@ -222,7 +223,7 @@ write.csv(df, file = "StartData_wide.csv")
 df <- read.csv(file = "StartData_wide.csv")
 
 #columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(2, 3)])
-columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(4, 5, 6)])
+columns_names = c("marital_status", var_SES_objective[c(2, 3)], var_educ_health[c(4, 5, 6)])
 
 df_temp <- select(df, c(idauniq, edqual, sex), starts_with("sclddr"))
 df_long <- pivot_longer(df_temp, !idauniq & !edqual & !sex, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
