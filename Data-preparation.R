@@ -51,9 +51,10 @@ index = distinct(index)
 # ADD SCLDDR
 
 # # ajout de la variable maritale (1 si en couple, 0 sinon)
-wave1_core$couple <- as.integer(wave1_core[,c("dimar")] %in% c(2,3))
+temporaire <- as.integer(wave1_core[,c("dimar")] %in% c(2,3))
+wave1_core$marital_status <- temporaire
 
-for (i in 1:9){
+for (i in 2:9){
   col <- data.frame(as.integer(get(paste0("wave", i, "_core"))$couple %in% c(1,2)))
   names(col) <- "marital_status"
   assign(x = paste0("wave", i, "_core"), value = cbind(get(paste0("wave", i, "_core")), col))
@@ -247,11 +248,18 @@ df_long$edqual <- fct_collapse(df_long$edqual, "0 - No qualification" = "7",
 # Les variables de revenus
 df_long[df_long$eqtotinc_bu_s < 0,]$eqtotinc_bu_s <- 0
 df_long$log_revenu <- log(df_long$eqtotinc_bu_s + 0.000000001)
+df_long$log_income <- log(df_long$eqtotinc_bu_s + 0.000000001)
 df_long$ihs_wealth <- asinh(df_long$nettotnhw_bu_s)
 
 # Sclddr divisé par 10 :
 df_long[df_long$sclddr < 0,]$sclddr <- NA
 df_long$sclddr <- df_long$sclddr/10
+
+# Sex : 1 pour les hommes et 0 pour les femmes
+df_long$sex <- as.integer(df_long[,c("sex")] == 1)
+
+# Age : ne garder que les personnes de plus de 50 ans
+df_long <- df_long %>% filter(age >= 50)
 
 write.csv(df_long, file = 'StartData_long_without_NA.csv')
 
