@@ -104,15 +104,15 @@ for (i in seq_len(9)){
 
 # --- Pour la vague 3 : 
 # Prendre la variable srh_hse
-wave3_IFS <- wave3_IFS[c("idauniq", "srh_hse", "edqual", "sex", "age", "wpactive")]
+wave3_IFS <- wave3_IFS[c("idauniq", "srh_hse", "edqual", "sex", "nonwhite", "age", "wpactive")]
 wave3_IFS$srh_hrs <- wave3_IFS$srh_hse
 
 
 # Keep the variable srh_hrs and education
-var_educ_health <- c("idauniq","edqual", "sex", "age", "srh_hrs", "wpactive")
+var_educ_health <- c("idauniq","edqual", "sex", "nonwhite", "age", "srh_hrs", "wpactive")
 
 for (i in 1:9){
-  df = merge( x=df, y=get(paste0("wave", i, "_IFS"))[c("idauniq","srh_hrs", "edqual", "age", "sex", "wpactive")], by="idauniq",all.x=TRUE)
+  df = merge( x=df, y=get(paste0("wave", i, "_IFS"))[c("idauniq","srh_hrs", "edqual", "nonwhite", "age", "sex", "wpactive")], by="idauniq",all.x=TRUE)
   # For each vairable in var_educ_health, rename the variable
   for (elem in var_educ_health[2:length(var_educ_health)]){
     names(df)[names(df) == elem] <- paste0(elem, i)
@@ -174,6 +174,15 @@ for (i in names){
 }
 df <- subset(df, select = -c(sex2,sex3,sex4,sex5,sex6,sex7,sex8,sex9))
 
+# Non white :
+df<-cbind(df,df$nonwhite1)
+names(df)[names(df)=="nonwhite1"] <-"nonwhite"
+names<-c('nonwhite2','nonwhite3','nonwhite4','nonwhite5','nonwhite6','nonwhite7','nonwhite8','nonwhite9')
+for (i in names){
+  df[,'nonwhite'][df[,'nonwhite']<0 | is.na(df[,'nonwhite'])]<-df[,i][df[,'nonwhite']<0 | is.na(df[,'nonwhite'])]
+}
+df <- subset(df, select = -c(nonwhite2,nonwhite3,nonwhite4,nonwhite5,nonwhite6,nonwhite7,nonwhite8,nonwhite9))
+
 #--------------------------------------------------------
 # ADD FINANCIAL VARIABLES
 
@@ -221,15 +230,15 @@ write.csv(df, file = "StartData_wide.csv")
 df <- read.csv(file = "StartData_wide.csv")
 
 #columns_names = c(var_SES_objective[c(2, 3)], var_educ_health[c(2, 3)])
-columns_names = c("marital_status", var_SES_objective[c(2, 3)], var_educ_health[c(4, 5, 6)])
+columns_names = c("marital_status", var_SES_objective[c(2, 3)], var_educ_health[c(5, 6, 7)])
 
-df_temp <- select(df, c(idauniq, edqual, sex), starts_with("sclddr"))
-df_long <- pivot_longer(df_temp, !idauniq & !edqual & !sex, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
+df_temp <- select(df, c(idauniq, edqual, sex, nonwhite), starts_with("sclddr"))
+df_long <- pivot_longer(df_temp, !idauniq & !edqual & !sex & !nonwhite, names_to = "wave", names_prefix = "sclddr", values_to = "sclddr")
 
 for (i in columns_names){
-  df_temp <- select(df, c(idauniq, edqual, sex), starts_with(i))
-  df_temp_long <- pivot_longer(df_temp, !idauniq & !edqual & !sex, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = TRUE)
-  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave', 'edqual', 'sex'))
+  df_temp <- select(df, c(idauniq, edqual, sex, nonwhite), starts_with(i))
+  df_temp_long <- pivot_longer(df_temp, !idauniq & !edqual & !sex & !nonwhite, names_to = "wave", names_prefix = i, values_to = i, values_drop_na = TRUE)
+  df_long <- merge(df_long, df_temp_long, by = c('idauniq', 'wave', 'edqual', 'sex', 'nonwhite'))
 }
 
 
