@@ -9,7 +9,9 @@ library(readr)
 StartData_long <- read.csv("StartData_long_without_NA.csv")
 
 StartData_long$wave <- as.factor(StartData_long$wave)
-name_column <- c("sclddr", "eqtotinc_bu_s", "nettotnhw_bu_s", "srh_hrs")
+name_column <- c("sclddr", "eqtotinc_bu_s", "nettotnhw_bu_s",
+                 "srh_hrs", "age", "edqual", "nonwhite",
+                 "wpactive", "marital_status", "sex")
 
 # -------------------- FONCTIONS UTILES ---------------------------------
 # Diagrammes en barres :
@@ -35,6 +37,13 @@ boxplot <- function(BDD, variable_x, variable_y, titre){
     labs(title= titre)
 }
 
+# Barplot : 
+barplot <- function(bdd, variable, titre) {
+  ggplot(data = bdd, aes_string(variable), aes_string()) +
+    geom_bar()+
+    labs(title= titre)
+}
+
 
 # ------------------ MISSING VALUES ----------------------
 # Créer des tables avec les valeurs manquantes : 
@@ -47,11 +56,32 @@ for (i in seq_len(length(name_column))){
   print(diagramme_en_barres(get(paste0("missing_value_", name_column[i])), "wave", titre))
 }
 
+# ------------------ Study of MISSING VALUES of SCLDDR ----------------------
+# La table contenant seulement les valeurs manquantes de Sclddr est : missing_value_sclddr
+missing_value_sclddr$srh_hrs_factor <- as.factor(missing_value_sclddr$srh_hrs)
+
+# Tracer les Self Rated Health des valeurs manquantes
+barplot(missing_value_sclddr, "srh_hrs", "Social Status") +
+  facet_wrap(. ~ wave, ncol = 3)
+
+# Faire un test du chi 2 d'homogénéité pour voir si les 2 population sont identiques
+L = numeric()
+for (i in 1:9){
+  test <- StartData_long %>% filter(wave == i)
+  test$missing <- as.integer(test$sclddr >= 0)
+  test[is.na(test$sclddr),]$missing <- 0
+  khi <- chisq.test(table(test$missing, test$srh_hrs))
+  L[i] <- khi$p.value
+}
+# L indique la p-valeur du test d'indépendance du chi-2 pour chaque vague
+L
+# Il y a un fort lien entre le fait de ne pas répondre à Sclddr et le self rated health
+
 # -------------------- HISTOGRAMME -----------------------------
 pdf("StatDesc/Histograms.pdf")
-histogramme(StartData_long, "sclddr", "Social Status") +
+barplot(StartData_long, "sclddr", "Social Status") +
   facet_wrap(. ~ wave, ncol = 3)
-histogramme(StartData_long, "srh_hrs", "Self Rated Health") +
+barplot(StartData_long, "srh_hrs", "Self Rated Health") +
   facet_wrap(. ~ wave, ncol = 3)
 histogramme(StartData_long%>% filter(log_revenu > 0.01), "log_revenu", "Log(income)") +
   facet_wrap(. ~ wave, ncol = 3)
