@@ -264,6 +264,9 @@ df_long$ihs_wealth <- asinh(df_long$nettotnhw_bu_s)
 df_long[df_long$sclddr < 0,]$sclddr <- NA
 df_long$sclddr <- df_long$sclddr/10
 
+# Mettre des NA lorsque nous n'avons pas la données
+df_long[df_long$nonwhite %in% c(-8, -9, -2),]$nonwhite <- NA
+
 # Sex : 1 pour les hommes et 0 pour les femmes
 df_long$sex <- as.integer(df_long[,c("sex")] == 1)
 
@@ -298,6 +301,11 @@ write.csv(df_long, file = 'StartData_long_without_NA.csv')
 # that analyze self-rated health using ELSA data from 20-25 years ago to get a
 # better understanding of what happened, but as a bottom line we probably just
 # need to accept that we are missing a bit of information at the beginning of the data.
-  
+
+
+variable <- c("wave", "sex", "nonwhite", "marital_status", "wpactive")
+for (i in 1:length(variable)){
+  df_long[,c(variable[i])] <- as.factor(df_long[,c(variable[i])])
+}  
   
   
