@@ -254,11 +254,32 @@ df_long$edqual <- fct_collapse(df_long$edqual, "0 - No qualification" = "7",
                                "4 - Some tertiary" = "2",
                                "5 - Tertiary" = "1")
 
+# Ajouter l'inflation à la table :
+col <- data.frame(matrix(0, nrow = nrow(df_long)))
+names(col) <- "inflation"
+df_long <- cbind(df_long, col)
+df_long[df_long$wave == 1,]$inflation <- 1
+df_long[df_long$wave == 2,]$inflation <- 1.056457511
+df_long[df_long$wave == 3,]$inflation <- 1.115986544
+df_long[df_long$wave == 4,]$inflation <- 1.210618692
+df_long[df_long$wave == 5,]$inflation <- 1.244112915
+df_long[df_long$wave == 6,]$inflation <- 1.373263127
+df_long[df_long$wave == 7,]$inflation <- 1.457510604
+df_long[df_long$wave == 8,]$inflation <- 1.493345034
+df_long[df_long$wave == 9,]$inflation <- 1.592511335
+
+# Multiplier les revenus et la richesse par l'inflation
+df_long$income_inflation <- df_long$eqtotinc_bu_s / df_long$inflation
+df_long$wealth_inflation <- df_long$nettotnhw_bu_s / df_long$inflation
+
 # Les variables de revenus
 df_long[df_long$eqtotinc_bu_s < 0,]$eqtotinc_bu_s <- 0
-df_long$log_revenu <- log(df_long$eqtotinc_bu_s + 0.000000001)
 df_long$log_income <- log(df_long$eqtotinc_bu_s + 0.000000001)
 df_long$ihs_wealth <- asinh(df_long$nettotnhw_bu_s)
+
+df_long[df_long$income_inflation < 0,]$income_inflation <- 0
+df_long$log_income_inflation <- log(df_long$income_inflation + 0.000000001)
+df_long$ihs_wealth_inflation <- asinh(df_long$wealth_inflation)
 
 # Sclddr divisé par 10 :
 df_long[df_long$sclddr < 0,]$sclddr <- NA
