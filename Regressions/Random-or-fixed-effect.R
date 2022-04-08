@@ -33,7 +33,7 @@ ols <-lm(srh_hrs ~ sclddr+log_income+ihs_wealth+edqual0+edqual1+edqual2+edqual3+
 summary(ols)
 
 # OLS sans les contrôles
-ols_without_controls <-lm(srh_hrs ~ sclddr + log_revenu, data=df_kept)
+ols_without_controls <-lm(srh_hrs ~ sclddr, data=df_kept)
 summary(ols_without_controls)
 
 # Pour avoir les standard errors clusterisées
