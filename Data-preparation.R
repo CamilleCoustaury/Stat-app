@@ -292,7 +292,10 @@ df_long[df_long$nonwhite %in% c(-8, -9, -2),]$nonwhite <- NA
 df_long$sex <- as.integer(df_long[,c("sex")] == 1)
 
 # Age : ne garder que les personnes de plus de 50 ans
+# On enlève les personnes de plus de 90 ans
+df_long[df_long$age < 0 ,]$age <- NA
 df_long <- df_long %>% filter(age >= 50)
+df_long <- df_long %>% filter(age <= 90)
 
 # Creation of dummies for each waves
 for (i in 1:9){
