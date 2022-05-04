@@ -304,7 +304,7 @@ for (i in 1:9){
   df_long <- cbind(df_long, col)
 }
 
-write.csv(df_long, file = 'StartData_long_without_NA.csv')
+write.csv(df_long, file = 'Data/StartData_long_without_NA.csv')
 
 
 # Inspection of the self-rated health variables yields various insights,

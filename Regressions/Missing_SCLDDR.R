@@ -4,11 +4,14 @@ library(tidyverse)
 library(dplyr)
 library(readr)
 library(fastDummies)
+library(sqldf)
 
-missing_value_sclddr <- StartData_long %>% rename(wave = wave, var = sclddr) %>% filter(is.na(var))
+StartData_long <- read.csv("Data/StartData_long_without_NA.csv")
+StartData_long$wave <- as.numeric(StartData_long$wave)
+df <- StartData_long[StartData_long$wave != 3,]
 
-df <- StartData_long
-df$wave <- as.numeric(df$wave)
+missing_value_sclddr <- df %>% filter(is.na(sclddr))
+not_missing_value_sclddr <- df %>% filter(sclddr >=0)
 
 
 # On crée une variable missing value (D du cours) :
@@ -19,7 +22,7 @@ df[is.na(df$sclddr),]$missing_value <- 1
 df$missing_value <- as.factor(df$missing_value)
 
 # Montrer le lien entre le fait que la variable soit manquante et la santé
-tab <- table(df$sex, df$missing_value)
+tab <- table(df$srh_hrs, df$missing_value)
 chisq.test(tab)
 mosaicplot(tab, las = 3, shade = TRUE)
 
@@ -42,20 +45,14 @@ p_value_chi_test
 library(rpart)
 library(rpart.plot)
 
-# Creation d'un df sans valeur manquante :
-df_without_missing <- df[df$missing_value == 0, c(variable_test, "age", "log_income_inflation", "ihs_wealth_inflation", "sclddr")]
-
-# Creation d'un df avec seulement les valeurs manquantes
-df_missing <- df[df$missing_value == 1, c(variable_test, "age", "log_income_inflation", "ihs_wealth_inflation", "idauniq", "wave")]
-
 # On créé un échantillon de test et un autre d'apprentissage :
-alea <- sample(1:nrow(df_without_missing), size = floor(nrow(df_without_missing)*0.2), replace = FALSE)
+alea <- sample(1:nrow(not_missing_value_sclddr), size = floor(nrow(not_missing_value_sclddr)*0.2), replace = FALSE)
 
-df_without_missing$ech <- 0
-df_without_missing[alea,]$ech <- 1
+not_missing_value_sclddr$ech <- 0
+not_missing_value_sclddr[alea,]$ech <- 1
 
-train=df_without_missing[df_without_missing$ech== 0, -c(length(df_without_missing))]
-test=df_without_missing[df_without_missing$ech==1,-c(length(df_without_missing))]
+train=not_missing_value_sclddr[not_missing_value_sclddr$ech== 0, -c(length(not_missing_value_sclddr))]
+test=not_missing_value_sclddr[not_missing_value_sclddr$ech==1,-c(length(not_missing_value_sclddr))]
 
 # On fixe les paramètres
 parametres=rpart.control(minsplit=200 , # nb min qu'il faut dans un noeud pr pvr fr une div
@@ -64,7 +61,7 @@ parametres=rpart.control(minsplit=200 , # nb min qu'il faut dans un noeud pr pvr
                          maxdepth = 30)
 
 # On apprend le modèle sur la base d'apprentissage :
-model_missing=rpart(sclddr ~ .,
+model_missing=rpart(sclddr ~ . - idauniq - wave,
                   data=train, 
                   control=parametres,
                   method="anova", # régression ou classification
@@ -81,17 +78,29 @@ test$err_cart <- (test$pred - test$sclddr)**2
 mean(test$err_cart)
 
 
+
+# Entrainer le modèle sur TOUTES les observations:
+model_missing=rpart(sclddr ~ . - idauniq - wave - sclddr,
+                    data=not_missing_value_sclddr, 
+                    control=parametres,
+                    method="anova", # régression ou classification
+                    parms=list( split='gini'))
+rpart.plot(model_missing, type = 2)
+
 # On fait les prédictions sur les valeurs manquantes :
-sclddr_new <- (predict(model_missing, df_missing))
-df_missing <- cbind(df_missing, sclddr_new)
+sclddr_new <- (predict(model_missing, missing_value_sclddr))
+missing_value_sclddr <- cbind(missing_value_sclddr, sclddr_new)
 
 # On met les nouvelles valeurs sclddr dans une base de donnée finale :
-df_missing_selection <- df_missing[, c("idauniq", "sclddr_new", "wave")]
+df_missing_selection <- missing_value_sclddr[, c("idauniq", "sclddr_new", "wave")]
 df_completed <- merge( x=df, y=df_missing_selection, by=c("idauniq", "wave"), all.x=TRUE)
 
 df_completed[is.na(df_completed$sclddr_new),]$sclddr_new <- df_completed[!is.na(df_completed$sclddr),]$sclddr
 
 write_csv(df_completed, "Regressions/BDD_sclddr_modifie.csv")
+
+
+
 
 
 # ----------------------- REGRESSIONS ------------------------------------------
@@ -110,7 +119,10 @@ prep_data_reg <- function(df_long){
 df <- prep_data_reg(df)
 
 
-ols <-lm(srh_hrs ~ sclddr_new+log_income+ihs_wealth+edqual0+edqual1+edqual2+edqual3+edqual4+sex+age+marital_status+wpactive,
+ols <-lm(srh_hrs ~ sclddr_new + log_income_inflation + ihs_wealth_inflation + 
+           edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
+           sex + age + marital_status + wpactive +
+           wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9,
          data=df)
 summary(ols)
 
@@ -119,12 +131,30 @@ ols_without_controls <-lm(srh_hrs ~ sclddr_new, data=df)
 summary(ols_without_controls)
 
 # Effets fixes
-within <- plm(srh_hrs ~ sclddr_new + log_revenu + ihs_wealth +age+marital_status+wpactive, data=df, index=c("idauniq", 'wave'), model="within")
-summary(within)
-fd <- plm(srh_hrs ~ sclddr_new + log_revenu + ihs_wealth + edqual0 + edqual1 + edqual2 + edqual3 + edqual4,
-          data=df, index=c("idauniq", "wave"), model="fd")
+fixed <- plm(srh_hrs ~ sclddr_new + log_income_inflation + ihs_wealth_inflation + 
+               edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
+               sex + age + marital_status + wpactive +
+               wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9,
+             data=df, index=c("idauniq", "wave"), model="within")
+summary(fixed)
+
+fd <- plm(srh_hrs ~ sclddr_new + log_income_inflation + ihs_wealth_inflation + 
+               edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
+               sex + age + marital_status + wpactive +
+               wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9,
+             data=df, index=c("idauniq", "wave"), model="fd")
 summary(fd)
 
+# Effets aléatoires
+random <- plm(srh_hrs ~ sclddr_new + log_income_inflation + ihs_wealth_inflation + 
+               edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
+               sex + age + marital_status + wpactive +
+               wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9,
+             data=df, index=c("idauniq", "wave"), model="random")
+summary(random)
+
+# Haussman test
+phtest(random, fixed)
 
 
 

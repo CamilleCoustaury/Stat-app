@@ -1,6 +1,6 @@
 # install.packages("fastDummies")
 #install.packages('Rcpp')
-library(Rcpp)
+library(Rcpp) 
 
 library(modelr)
 library(ggplot2)
@@ -12,8 +12,8 @@ library(lmtest)
 
 
 setwd("~/Documents/statApp/git/Stat-app/git")
-#setwd("~/Desktop/Stat-App_git/Stat-app/Data")
-df_long <- read.csv("StartData_long_without_NA.csv")
+setwd("~/Desktop/Stat-App_git/Stat-app")
+df_long <- read.csv("Data/StartData_long_without_NA.csv")
 
 # Dummies pour l'éducation 
 df_long <- dummy_cols(df_long, select_columns = 'edqual')
@@ -21,7 +21,7 @@ df_long <- df_long[, - c(1, length(df_long), length(df_long)-1)]
 colnames(df_long)[c((length(df_long)-4):length(df_long))] <- c("edqual0", "edqual1", "edqual2", "edqual3", "edqual4")
 
 # On enlève les individus avec des données manquantes ou avec un salaire négatif
-keep <- which(df_long$sclddr != 3 & df_long$sclddr >= 0)
+keep <- which(df_long$wave != 3 & df_long$sclddr >= 0)
 df_kept <- df_long[keep,]
 
 
@@ -29,7 +29,7 @@ df_kept <- df_long[keep,]
 # OLS
 ols <-lm(srh_hrs ~ sclddr + log_income_inflation + ihs_wealth_inflation + 
            edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
-           sex + age + marital_status + wpactive +
+           sex + age + marital_status + wpactive + nonwhite +
            wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9,
          data=df_kept)
 summary(ols)
@@ -51,10 +51,13 @@ m1coeffs_ols_without_controls
 # on calcule la regression avec le modèle des fixed effects et des random effects
 fixed <- plm(srh_hrs ~ sclddr + log_income_inflation + ihs_wealth_inflation + 
                edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
-               sex + age + marital_status + wpactive +
+               sex + age + marital_status + wpactive + nonwhite +
                wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9,
-             data=df_kept, index=c("idauniq", 'wave'), model="within")
+             data=df_kept, index=c("idauniq", "wave"), model="within")
 summary(fixed)
+
+m1coeffs_fixed <- coeftest(fixed, vcov. = vcovHC, cluster = ~idauniq)
+m1coeffs_fixed
 
 # Certaines variables de contrôles ne sont plus significatives
 # log_income_inflation - marital_status - wpactive
@@ -62,7 +65,7 @@ summary(fixed)
 
 random <- plm(srh_hrs ~ sclddr + log_income_inflation + ihs_wealth_inflation + 
                 edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
-                sex + age + marital_status + wpactive +
+                sex + age + marital_status + wpactive + nonwhite +
                 wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9,
               data=df_kept, index=c("idauniq", "wave"), model="random")
 summary(random)
@@ -70,7 +73,7 @@ summary(random)
 
 fd <- plm(srh_hrs ~ sclddr + log_income_inflation + ihs_wealth_inflation + 
             edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
-            sex + age + marital_status + wpactive +
+            sex + age + marital_status + wpactive + nonwhite +
             wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9,
           data=df_kept, index=c("idauniq"), model="fd")
 summary(fd)
@@ -82,3 +85,14 @@ phtest(random, fixed)
 
 # p-value is consistent then the random effect model is inconsistent and 
 # we have to choose the fixed effect model
+
+fd <- plm(srh_hrs ~ sclddr + log_income_inflation + ihs_wealth_inflation + 
+            edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
+            sex + age + marital_status + wpactive + nonwhite +
+            wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9 | . - sclddr + lag(sclddr, 1),
+          data=df_kept, index=c("idauniq"), model="fd")
+summary(fd)
+
+
+
+

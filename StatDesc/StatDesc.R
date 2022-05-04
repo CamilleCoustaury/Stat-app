@@ -5,10 +5,13 @@ library(dplyr)
 library(readr)
 
 # ------------------- PREPARATION BDD --------------------------
-#StartData_long <- read.csv("Data/StartData_long_without_NA.csv")
-StartData_long <- read.csv("StartData_long_without_NA.csv")
-
+#StartData_long <- read.csv("StartData_long_without_NA.csv")
+StartData_long <- read.csv("Data/StartData_long_without_NA.csv")
 StartData_long$wave <- as.factor(StartData_long$wave)
+
+# Keep only third wave and no missing values
+keep <- which(StartData_long$wave != 3 & StartData_long$sclddr >= 0)
+StartData_long <- StartData_long[keep,]
 name_column <- c("sclddr", "eqtotinc_bu_s", "nettotnhw_bu_s", "srh_hrs")
 
 # -------------------- FONCTIONS UTILES ---------------------------------
@@ -53,9 +56,9 @@ histogramme(StartData_long, "sclddr", "Social Status") +
   facet_wrap(. ~ wave, ncol = 3)
 histogramme(StartData_long, "srh_hrs", "Self Rated Health") +
   facet_wrap(. ~ wave, ncol = 3)
-histogramme(StartData_long%>% filter(log_revenu > 0.01), "log_revenu", "Log(income)") +
+histogramme(StartData_long%>% filter(log_income_inflation > 0.01), "log_income_inflation", "Log(income)") +
   facet_wrap(. ~ wave, ncol = 3)
-histogramme(StartData_long , "ihs_wealth", "Ifs(wealth)") +
+histogramme(StartData_long , "ihs_wealth_inflation", "Ifs(wealth)") +
   facet_wrap(. ~ wave, ncol = 3)
 histogramme(StartData_long, "age", "Age") +
   facet_wrap(. ~ wave, ncol = 3)
@@ -85,11 +88,13 @@ dev.off()
 
   # Différence entre les Self Rated Health
 pdf(file = "StatDesc/Boxplots_health.pdf", height=10,width=10)
-boxplot(StartData_long, "srh_hrs_factor", "sclddr", "Social status vs Self Rated Health (by wave)") +
+boxplot(StartData_long %>% filter(wave %in% c(1, 2, 4)), "srh_hrs_factor", "sclddr", "Social status vs Self Rated Health (by wave)") +
+  facet_wrap(. ~ wave, ncol = 3, labeller=label_both) +
+  labs(title="Social status vs Self Rated Health (by wave)",
+        x ="Self Rated Health", y = "Subjective Social Status")
+boxplot(StartData_long %>% filter(log_income_inflation > -20), "srh_hrs_factor", "log_income_inflation", "Log(Income) vs Self Rated Health (by wave)") +
   facet_wrap(. ~ wave, ncol = 3)
-boxplot(StartData_long %>% filter(log_revenu > -20), "srh_hrs_factor", "log_revenu", "Log(Income) vs Self Rated Health (by wave)") +
-  facet_wrap(. ~ wave, ncol = 3)
-boxplot(StartData_long %>% filter(log_revenu > -20), "srh_hrs_factor", "ihs_wealth", "Ihs(Wealth) vs Self Rated Health (by wave)")+
+boxplot(StartData_long %>% filter(log_income_inflation > -20), "srh_hrs_factor", "ihs_wealth_inflation", "Ihs(Wealth) vs Self Rated Health (by wave)")+
   facet_wrap(. ~ wave, ncol = 3)
 boxplot(StartData_long, "srh_hrs_factor", "age", "Age vs Self Rated Health (by wave)")+
   facet_wrap(. ~ wave, ncol = 3)
