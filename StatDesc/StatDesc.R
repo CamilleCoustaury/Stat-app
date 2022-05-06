@@ -35,7 +35,8 @@ boxplot <- function(BDD, variable_x, variable_y, titre){
   ggplot(BDD, aes_string(x= variable_x, y=variable_y)) + 
     geom_boxplot(outlier.colour="red", outlier.shape=1,
                  outlier.size=1) +
-    labs(title= titre)
+    labs(title= titre) +
+    coord_flip()
 }
 
 
@@ -91,7 +92,8 @@ pdf(file = "StatDesc/Boxplots_health.pdf", height=10,width=10)
 boxplot(StartData_long %>% filter(wave %in% c(1, 2, 4)), "srh_hrs_factor", "sclddr", "Social status vs Self Rated Health (by wave)") +
   facet_wrap(. ~ wave, ncol = 3, labeller=label_both) +
   labs(title="Social status vs Self Rated Health (by wave)",
-        x ="Self Rated Health", y = "Subjective Social Status")
+        x ="Self Rated Health", y = "Subjective Social Status") + theme_bw()
+
 boxplot(StartData_long %>% filter(log_income_inflation > -20), "srh_hrs_factor", "log_income_inflation", "Log(Income) vs Self Rated Health (by wave)") +
   facet_wrap(. ~ wave, ncol = 3)
 boxplot(StartData_long %>% filter(log_income_inflation > -20), "srh_hrs_factor", "ihs_wealth_inflation", "Ihs(Wealth) vs Self Rated Health (by wave)")+
@@ -129,3 +131,15 @@ table(StartData_long$wave, StartData_long$wpactive)
 table(StartData_long$wave, StartData_long$edqual)
 
 
+# Write in LaTeX :
+df_kept$wave <- as.factor(df_kept$wave)
+df_kept$edqual <- as.factor(df_kept$edqual)
+df_kept$sex <- as.factor(df_kept$sex)
+df_kept$nonwhite <- as.factor(df_kept$nonwhite)
+df_kept$marital_status <- as.factor(df_kept$marital_status)
+df_kept$wpactive <- as.factor(df_kept$wpactive)
+
+stargazer(df_kept)
+  
+  
+  

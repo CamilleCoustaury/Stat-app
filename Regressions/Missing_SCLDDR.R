@@ -24,7 +24,7 @@ df$missing_value <- as.factor(df$missing_value)
 # Montrer le lien entre le fait que la variable soit manquante et la santé
 tab <- table(df$srh_hrs, df$missing_value)
 chisq.test(tab)
-mosaicplot(tab, las = 3, shade = TRUE)
+mosaicplot(tab, las = 3, shade = TRUE, color = FALSE)
 
 # Parmi les gens en mauvaise santé, il y a une surréprésentation de valeurs manquantes
 variable_test <- c("edqual", "sex", "nonwhite", "marital_status", "wpactive",
@@ -61,11 +61,15 @@ parametres=rpart.control(minsplit=200 , # nb min qu'il faut dans un noeud pr pvr
                          maxdepth = 30)
 
 # On apprend le modèle sur la base d'apprentissage :
-model_missing=rpart(sclddr ~ . - idauniq - wave,
+#levels(train$edqual) <- c("0", "1", "2", "3", '4', '5')
+model_missing=rpart(sclddr ~ wave + edqual + sex + nonwhite + marital_status +
+                      age + wpactive + log_income_inflation + income_inflation +
+                      wealth_inflation + ihs_wealth_inflation,
                   data=train, 
                   control=parametres,
                   method="anova", # régression ou classification
                   parms=list( split='gini')) # par défaut, c'est Gini
+
 
 rpart.plot(model_missing, type = 2)
 
@@ -80,7 +84,10 @@ mean(test$err_cart)
 
 
 # Entrainer le modèle sur TOUTES les observations:
-model_missing=rpart(sclddr ~ . - idauniq - wave - sclddr,
+levels(not_missing_value_sclddr$edqual) <- c("0", "1", "2", "3", '4', '5')
+model_missing=rpart(sclddr ~ wave + edqual + sex + nonwhite + marital_status +
+                      age + wpactive + log_income_inflation + income_inflation +
+                      wealth_inflation + ihs_wealth_inflation,
                     data=not_missing_value_sclddr, 
                     control=parametres,
                     method="anova", # régression ou classification
@@ -91,6 +98,18 @@ rpart.plot(model_missing, type = 2)
 sclddr_new <- (predict(model_missing, missing_value_sclddr))
 missing_value_sclddr <- cbind(missing_value_sclddr, sclddr_new)
 
+
+missing_value_sclddr$sclddr_new <- round(missing_value_sclddr$sclddr_new , 2)
+tab <- table(missing_value_sclddr$srh_hrs, missing_value_sclddr$sclddr_new)
+chisq.test(tab)
+mosaicplot(tab, las = 1, shade = TRUE, xlab = "SRH", ylab = "SSS")
+#
+missing_value_sclddr$srh_hrs <- as.factor(missing_value_sclddr$srh_hrs)
+boxplot(missing_value_sclddr, "srh_hrs", "sclddr", "Social status vs Self Rated Health (by wave)") +
+  facet_wrap(. ~ srh_hrs, ncol = 3, labeller=label_both) +
+  labs(title="Social status vs Self Rated Health (by wave)",
+       x ="Self Rated Health", y = "Subjective Social Status")
+
 # On met les nouvelles valeurs sclddr dans une base de donnée finale :
 df_missing_selection <- missing_value_sclddr[, c("idauniq", "sclddr_new", "wave")]
 df_completed <- merge( x=df, y=df_missing_selection, by=c("idauniq", "wave"), all.x=TRUE)
@@ -98,6 +117,8 @@ df_completed <- merge( x=df, y=df_missing_selection, by=c("idauniq", "wave"), al
 df_completed[is.na(df_completed$sclddr_new),]$sclddr_new <- df_completed[!is.na(df_completed$sclddr),]$sclddr
 
 write_csv(df_completed, "Regressions/BDD_sclddr_modifie.csv")
+
+
 
 
 
@@ -126,9 +147,15 @@ ols <-lm(srh_hrs ~ sclddr_new + log_income_inflation + ihs_wealth_inflation +
          data=df)
 summary(ols)
 
+m1coeffs_ols <- coeftest(ols, vcov. = vcovHC, cluster = ~idauniq)
+m1coeffs_ols
+
 # OLS sans les contrôles
 ols_without_controls <-lm(srh_hrs ~ sclddr_new, data=df)
 summary(ols_without_controls)
+
+m1coeffs_ols_without_controls <- coeftest(ols_without_controls, vcov. = vcovHC, cluster = ~idauniq)
+m1coeffs_ols_without_controls
 
 # Effets fixes
 fixed <- plm(srh_hrs ~ sclddr_new + log_income_inflation + ihs_wealth_inflation + 
@@ -137,6 +164,9 @@ fixed <- plm(srh_hrs ~ sclddr_new + log_income_inflation + ihs_wealth_inflation 
                wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9,
              data=df, index=c("idauniq", "wave"), model="within")
 summary(fixed)
+
+m1coeffs_random <- coeftest(random, vcov. = vcovHC, cluster = ~idauniq)
+m1coeffs_random
 
 fd <- plm(srh_hrs ~ sclddr_new + log_income_inflation + ihs_wealth_inflation + 
                edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 

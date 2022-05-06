@@ -56,9 +56,6 @@ fixed <- plm(srh_hrs ~ sclddr + log_income_inflation + ihs_wealth_inflation +
              data=df_kept, index=c("idauniq", "wave"), model="within")
 summary(fixed)
 
-m1coeffs_fixed <- coeftest(fixed, vcov. = vcovHC, cluster = ~idauniq)
-m1coeffs_fixed
-
 # Certaines variables de contrôles ne sont plus significatives
 # log_income_inflation - marital_status - wpactive
 # Coef : 0.019
@@ -91,7 +88,14 @@ fd <- plm(srh_hrs ~ sclddr + log_income_inflation + ihs_wealth_inflation +
             sex + age + marital_status + wpactive + nonwhite +
             wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9 | . - sclddr + lag(sclddr, 1),
           data=df_kept, index=c("idauniq"), model="fd")
-summary(fd)
+
+
+between <- plm(srh_hrs ~ sclddr + log_income_inflation + ihs_wealth_inflation + 
+            edqual0 + edqual1 + edqual2 + edqual3 + edqual4 + 
+            sex + age + marital_status + wpactive + nonwhite +
+            wave2 + wave4 + wave5 + wave6 + wave7 + wave8 + wave9 | . - sclddr + lag(sclddr, 1),
+          data=df_kept, index=c("idauniq"), model="between")
+summary(between)
 
 
 
